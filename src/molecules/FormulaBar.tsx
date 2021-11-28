@@ -13,9 +13,12 @@ const FormulaBar: React.FC<FormulaBarProps> = () => {
       state.data.rawExpressions.get(state.data.selectedExpression.toString()) ??
       ""
   );
+  const selectedExprCoords = useSelector(
+    (state: RootState) => state.data.selectedExpression
+  );
   const [textValue, setTextValue] = useState(rawExpr);
 
-  useEffect(() => setTextValue(rawExpr), [rawExpr]);
+  useEffect(() => setTextValue(rawExpr), [rawExpr, selectedExprCoords]);
   const dispatch = useDispatch();
   return (
     <div className="formula-bar-container">

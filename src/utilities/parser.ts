@@ -278,7 +278,7 @@ export class Tokenizer {
         Tokenizer.appendNested(tokens, [], currDepth);
         currDepth++;
       } else if (c === ")") {
-        if (buffer) {
+        if (buffer.length > 0) {
           let word: string = buffer.join("");
           Tokenizer.appendNested(tokens, word, currDepth);
           buffer.length = 0; // weird way of doing this right? but you can
@@ -332,7 +332,6 @@ export class Compiler {
     dependencies: Set<Coords>
   ): Expr {
     console.log(`EXPR: ${expr}`);
-    console.log(typeof expr);
     if (typeof expr === "string") {
       /*
         1. Number
