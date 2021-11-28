@@ -1,0 +1,6 @@
+.table-cell {
+  min-width: 24px;
+}
+.selected-cell {
+  border: 2px solid;
+}

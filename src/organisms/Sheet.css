@@ -1,0 +1,7 @@
+.spreadsheet-table table, th, td {
+  border: 1px solid black;
+}
+
+.spreadsheet-container {
+  overflow-x: scroll;
+}
