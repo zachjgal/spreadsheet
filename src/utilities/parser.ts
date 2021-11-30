@@ -1,4 +1,12 @@
 import { range as lodashRange } from "lodash";
+import {
+  InvalidFormError,
+  UnsupportedOperationError,
+  NArgsError,
+  ParserError,
+  TokenizerError,
+  InvalidExpressionError,
+} from "./errors";
 
 type TokensList = string | TokensList[];
 
@@ -62,19 +70,19 @@ const getOperationArgLengthAssertion = (
   if (unaryOperations.includes(op)) {
     return (args) => {
       if (args.length !== 1) {
-        throw Error(`unary operation takes exactly 1 arg, given ${args}`);
+        throw new NArgsError("Unary operator", args.length, 1);
       }
     };
   } else if (binaryOperations.includes(op)) {
     return (args) => {
       if (args.length !== 2) {
-        throw Error(`binary operation takes exactly 2 args, given ${args}`);
+        throw new NArgsError("Binary operator", args.length, 2);
       }
     };
   } else if (nAryOperations.includes(op)) {
     return (_) => {};
   } else {
-    throw Error(`Unrecognized operation, given ${op}`);
+    throw new UnsupportedOperationError(op);
   }
 };
 
@@ -144,7 +152,7 @@ class IFLanguageForm implements Expr {
 
   constructor(args: Expr[]) {
     if (args.length !== 3) {
-      throw Error(`IF contains exactly 3 clauses, given ${args}`);
+      throw new NArgsError("IF clause", args.length, 3);
     }
     this.args = args;
   }
@@ -152,7 +160,9 @@ class IFLanguageForm implements Expr {
   execute(sheet: SheetData): CellValue {
     const predicate = this.args[0].execute(sheet);
     if (typeof predicate !== "boolean") {
-      throw Error(`IF requires the first clause to be a boolean expression`);
+      throw new InvalidFormError(
+        `IF requires the first clause to be a boolean expression`
+      );
     }
     return predicate
       ? this.args[1].execute(sheet)
@@ -293,12 +303,12 @@ export class Tokenizer {
     let currList: string | TokensList = list;
     for (let i: number = 0; i < depth; i++) {
       if (currList.length === 0) {
-        throw Error(
+        throw new TokenizerError(
           `List at depth ${i} is empty. Can't append list ${list} at depth ${depth}`
         );
       }
       if (!(currList[currList.length - 1] instanceof Array)) {
-        throw Error(
+        throw new TokenizerError(
           `Depth of ${depth} is too great. Maximum possible depth given tokens is ${
             i - 1
           }`
@@ -341,7 +351,9 @@ export class Tokenizer {
       tokens.push(buffer.join(""));
     }
     if (tokens.length !== 1) {
-      throw Error(`Input ${input} invalid: Top level operation needed`);
+      throw new TokenizerError(
+        `Input ${input} invalid: Top level operation needed`
+      );
     }
     return tokens[0];
   }
@@ -360,20 +372,20 @@ export class Compiler {
     } else if (constStr === "f" || constStr === "false") {
       return new PrimitiveExpr(false);
     } else {
-      throw new Error(`Unrecognized constant: ${obj.substr(1)}`);
+      throw new ParserError(`Unrecognized constant: ${obj.substr(1)}`);
     }
   }
 
   parseAsNumber(obj: string, _: Set<Coords>): Expr {
     if (isNaN(Number(obj))) {
-      throw new Error("not a number!!!!");
+      throw new ParserError(`${obj} is not a number`);
     }
     return new PrimitiveExpr(Number(obj));
   }
   // just strips the quotes off the given string if necessary
   parseAsLangString(expr: string, _: Set<Coords>): Expr {
     if (!(expr.charAt(0) === '"' && expr.charAt(expr.length - 1))) {
-      throw Error(
+      throw new ParserError(
         `String literal ${expr} must be contained within double quotes`
       );
     }
@@ -388,7 +400,7 @@ export class Compiler {
   compileWithDependencies(expr: TokensList, dependencies: Set<Coords>): Expr {
     if (typeof expr === "string") {
       if (CellRange.isCellRange(expr)) {
-        throw Error(
+        throw new InvalidExpressionError(
           "CellRange isn't a valid primitive and is only recognized" +
             " as the singular argument to an aggregate operation"
         );
@@ -409,10 +421,15 @@ export class Compiler {
         try {
           compiledExpression = compilePrimitive(expr, dependencies);
           break;
-        } catch {}
+        } catch (err) {
+          // Only expect to see ParserErrors
+          if ((err as Error).name !== "ParserError") {
+            throw err;
+          }
+        }
       }
       if (compiledExpression === undefined) {
-        throw Error(`Invalid expression: ${expr}`);
+        throw new InvalidExpressionError("Expression is undefined");
       }
       return compiledExpression;
     } else {
@@ -421,7 +438,7 @@ export class Compiler {
         2. [ <FormType> <Expr>... ]
       */
       if (!expr.length) {
-        throw Error(`empty operation ${expr}`);
+        throw new InvalidExpressionError(`Empty expression not allowed`);
       }
       let [action, ...args] = expr; // action can either be a language operation or language form
 
@@ -451,7 +468,8 @@ export class Compiler {
           args.map((arg) => this.compileWithDependencies(arg, dependencies))
         );
       } else {
-        throw Error(`invalid expression ${expr}`);
+        // TODO we should never reach this case, right?
+        throw new InvalidExpressionError(`Expression ${expr} is invalid`);
       }
     }
   }
