@@ -96,6 +96,9 @@ export const sheetState = createSlice({
           }
         }
         updateCellAndChildren(cell);
+        if (state.errors.has(state.selectedExpression.toString())) {
+          state.errors.delete(state.selectedExpression.toString());
+        }
       } catch (err) {
         state.errors.set(state.selectedExpression.toString(), err as Error);
       }

@@ -28,6 +28,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
   value,
   onSelect,
   isSelected,
+  hasError,
 }) => {
   const dispatch = useDispatch();
   return (
@@ -36,7 +37,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
       // todo handle cells that have error w/ css
       onClick={() => dispatch(onSelect())}
     >
-      <CellDisplayValue value={value} />
+      <CellDisplayValue value={hasError ? "ERROR" : value} />
     </td>
   );
 };
