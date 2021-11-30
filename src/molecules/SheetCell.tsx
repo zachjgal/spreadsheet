@@ -29,7 +29,6 @@ const SheetCell: React.FC<SheetCellProps> = ({
   isSelected,
 }) => {
   const dispatch = useDispatch();
-
   return (
     <td
       className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
