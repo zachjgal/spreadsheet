@@ -2,83 +2,172 @@ import { range as lodashRange } from "lodash";
 
 type TokensList = string[] | TokensList[] | string;
 
-// export class SheetData {
-//   public data: CellValue[][];
-//
-//   constructor(initialRows: number, initialCols: number) {
-//     this.data = [];
-//     this.data.fill([], 0, initialRows);
-//     for (let i: number = 0; i < initialRows; i++) {
-//       this.data[i].fill("", 0, initialCols);
-//     }
-//   }
-//
-//   get numRows(): number {
-//     return this.data.length;
-//   }
-//
-//   get numCols(): number {
-//     return this.data[0].length;
-//   }
-//
-//   insertRow(index?: number) {
-//     index = index ?? this.numRows;
-//     let newRow: CellValue[] = [];
-//     newRow.fill("", 0, this.numCols);
-//     this.data.splice(index, 0, newRow);
-//   }
-//
-//   insertCol(index?: number) {
-//     index = index ?? this.numCols;
-//     for (let row of this.data) {
-//       row.splice(index, 0, "");
-//     }
-//   }
-// }
-
-enum BinaryOpType {
+enum OperationType {
+  // Unary
+  NOT = "NOT",
+  // Binary
   ADD = "+",
   MULTIPLY = "*",
   DIVIDE = "/",
   SUBTRACT = "-",
   EXPONENT = "^",
-}
-
-const binaryOpTypeToFunction = (
-  op: BinaryOpType
-): ((a: CellValue, b: CellValue) => CellValue) => {
-  let binaryOpToFunctionMap = {
-    [BinaryOpType.ADD]: (a: any, b: any) => a + b,
-    [BinaryOpType.SUBTRACT]: (a: any, b: any) => a - b,
-    [BinaryOpType.MULTIPLY]: (a: any, b: any) => a * b,
-    [BinaryOpType.DIVIDE]: (a: any, b: any) => a / b,
-    [BinaryOpType.EXPONENT]: (a: any, b: any) => a ** b,
-  };
-  return binaryOpToFunctionMap[op];
-};
-
-enum AggregateOpType {
+  GREATER_THAN = ">",
+  GREATER_THAN_OR_EQUAL_TO = ">=",
+  LESS_THAN = "<",
+  LESS_THAN_OR_EQUAL_TO = "<=",
+  EQUALS = "=",
+  AND = "AND",
+  OR = "OR",
+  XOR = "XOR",
+  // Aggregate
   SUM = "SUM",
   PRODUCT = "PRODUCT",
   AVERAGE = "AVG",
   CONCATENATE = "CONCAT",
+  ALL = "ALL",
+  ANY = "ANY",
+  MINIMUM = "MIN",
+  MAXIMUM = "MAX",
 }
 
-const aggregateOpTypeToFunction = (
-  op: AggregateOpType
-): ((args: CellValue[]) => CellValue) => {
-  let aggregateOpToFunctionMap = {
-    [AggregateOpType.SUM]: (args: any) =>
-      args.reduce((sum: any, curr: any) => sum + curr, 0),
-    [AggregateOpType.PRODUCT]: (args: any) =>
-      args.reduce((prod: any, curr: any) => prod * curr, 1),
-    [AggregateOpType.AVERAGE]: (args: any) =>
-      args.reduce((sum: any, curr: any) => sum + curr, 0) / args.length,
-    [AggregateOpType.CONCATENATE]: (args: any) =>
-      args.reduce((sum: any, curr: any) => sum + curr, ""),
-  };
-  return aggregateOpToFunctionMap[op];
+const getOperationArgLengthAssertion = (
+  op: OperationType
+): ((args: any[]) => void) => {
+  const unaryOperations = [OperationType.NOT];
+  const binaryOperations = [
+    OperationType.ADD,
+    OperationType.MULTIPLY,
+    OperationType.DIVIDE,
+    OperationType.SUBTRACT,
+    OperationType.EXPONENT,
+    OperationType.GREATER_THAN,
+    OperationType.GREATER_THAN_OR_EQUAL_TO,
+    OperationType.LESS_THAN,
+    OperationType.LESS_THAN_OR_EQUAL_TO,
+    OperationType.EQUALS,
+    OperationType.AND,
+    OperationType.OR,
+    OperationType.XOR,
+  ];
+  const nAryOperations = [
+    OperationType.SUM,
+    OperationType.PRODUCT,
+    OperationType.AVERAGE,
+    OperationType.CONCATENATE,
+    OperationType.ALL,
+    OperationType.ANY,
+    OperationType.MINIMUM,
+    OperationType.MAXIMUM,
+  ];
+  if (unaryOperations.includes(op)) {
+    return (args) => {
+      if (args.length !== 1) {
+        throw Error(`unary operation takes exactly 1 arg, given ${args}`);
+      }
+    };
+  } else if (binaryOperations.includes(op)) {
+    return (args) => {
+      if (args.length !== 2) {
+        throw Error(`binary operation takes exactly 2 args, given ${args}`);
+      }
+    };
+  } else if (nAryOperations.includes(op)) {
+    return (_) => {};
+  } else {
+    throw Error(`Unrecognized operation, given ${op}`);
+  }
 };
+
+const operationTypeToFunction = (
+  op: OperationType
+): ((...args: CellValue[]) => CellValue) => {
+  let operationMap = {
+    [OperationType.NOT]: (arg: any) => !arg,
+    [OperationType.ADD]: (a: any, b: any) => a + b,
+    [OperationType.SUBTRACT]: (a: any, b: any) => a - b,
+    [OperationType.MULTIPLY]: (a: any, b: any) => a * b,
+    [OperationType.DIVIDE]: (a: any, b: any) => a / b,
+    [OperationType.EXPONENT]: (a: any, b: any) => a ** b,
+    [OperationType.GREATER_THAN]: (a: any, b: any) => a > b,
+    [OperationType.GREATER_THAN_OR_EQUAL_TO]: (a: any, b: any) => a >= b,
+    [OperationType.LESS_THAN]: (a: any, b: any) => a < b,
+    [OperationType.LESS_THAN_OR_EQUAL_TO]: (a: any, b: any) => a <= b,
+    [OperationType.EQUALS]: (a: any, b: any) => a === b,
+    [OperationType.AND]: (a: any, b: any) => a && b,
+    [OperationType.OR]: (a: any, b: any) => a || b,
+    [OperationType.XOR]: (a: any, b: any) => a !== b,
+    [OperationType.SUM]: (...args: any) =>
+      args.reduce((sum: any, curr: any) => sum + curr, 0),
+    [OperationType.PRODUCT]: (...args: any) =>
+      args.reduce((prod: any, curr: any) => prod * curr, 1),
+    [OperationType.AVERAGE]: (...args: any) =>
+      args.reduce((sum: any, curr: any) => sum + curr, 0) / args.length,
+    [OperationType.CONCATENATE]: (...args: any) =>
+      args.reduce((sum: any, curr: any) => sum + curr, ""),
+    [OperationType.ALL]: (...args: any) =>
+      args.reduce((agg: any, curr: any) => agg && curr, true),
+    [OperationType.ANY]: (...args: any) =>
+      args.reduce((agg: any, curr: any) => agg || curr, false),
+    [OperationType.MINIMUM]: (...args: any) =>
+      args.reduce((agg: any, curr: any) => (agg <= curr ? agg : curr), args[0]),
+    [OperationType.MAXIMUM]: (...args: any) =>
+      args.reduce((agg: any, curr: any) => (agg >= curr ? agg : curr), args[0]),
+  };
+  return operationMap[op];
+};
+
+class LanguageOperation implements Expr {
+  private readonly op: (...args: CellValue[]) => CellValue;
+  private readonly args: Expr[];
+
+  constructor(op: OperationType, args: Expr[]) {
+    const assertArgLength = getOperationArgLengthAssertion(op);
+    const operationFunction = operationTypeToFunction(op);
+    this.op = (...args) => {
+      assertArgLength(args);
+      return operationFunction(...args);
+    };
+    this.args = args;
+  }
+
+  execute(sheet: SheetData): CellValue {
+    return this.op(...this.args.map((e) => e.execute(sheet)));
+  }
+}
+
+enum FormType {
+  IF = "IF",
+}
+
+class IFLanguageForm implements Expr {
+  private readonly args: Expr[];
+
+  constructor(args: Expr[]) {
+    if (args.length !== 3) {
+      throw Error(`IF contains exactly 3 clauses, given ${args}`);
+    }
+    this.args = args;
+  }
+
+  execute(sheet: SheetData): CellValue {
+    const predicate = this.args[0].execute(sheet);
+    if (typeof predicate !== "boolean") {
+      throw Error(`IF requires the first clause to be a boolean expression`);
+    }
+    return predicate
+      ? this.args[1].execute(sheet)
+      : this.args[2].execute(sheet);
+  }
+}
+
+class LanguageFormFactory {
+  static create(formType: FormType, args: Expr[]): Expr {
+    const languageFormMap = {
+      [FormType.IF]: IFLanguageForm,
+    };
+    return new languageFormMap[formType](args);
+  }
+}
 
 class PrimitiveExpr implements Expr {
   private readonly value: CellValue;
@@ -160,13 +249,13 @@ class CellRange {
   private readonly bottomRightRow: number;
   private readonly bottomRightCol: number;
 
-  public isCellRange(expr: string): boolean {
+  public static isCellRange(expr: string): boolean {
     let match = expr.match(CellRange.REGEX);
     return !!match;
   }
 
   constructor(expr: string) {
-    if (!this.isCellRange(expr)) {
+    if (!CellRange.isCellRange(expr)) {
       throw Error(`Expression ${expr} is not a valid cell range`);
     }
     let [topLeft, bottomRight] = expr.split(":");
@@ -192,53 +281,6 @@ class CellRange {
 
   asCells(): CellRef[] {
     return this.coords.map((coord) => CellRef.fromCoords(coord));
-  }
-  //
-  // execute(sheet: SheetData): CellValue[] {
-  //   let sheetValues: CellValue[] = [];
-  //   for (let coord of this.coords) {
-  //     sheetValues.push(sheet.data[coord[0]][coord[1]]);
-  //   }
-  //   return sheetValues;
-  // }
-}
-
-class BinaryOperation implements Expr {
-  private readonly op: BinaryOpType;
-  private readonly left: Expr;
-  private readonly right: Expr;
-
-  constructor(op: BinaryOpType, left: Expr, right: Expr) {
-    this.op = op;
-    this.left = left;
-    this.right = right;
-  }
-
-  execute(sheet: SheetData): CellValue {
-    return binaryOpTypeToFunction(this.op)(
-      this.left.execute(sheet),
-      this.right.execute(sheet)
-    );
-  }
-}
-
-class AggregateOperation implements Expr {
-  private readonly op: AggregateOpType;
-  private readonly exprs: Expr[];
-
-  constructor(op: AggregateOpType, exprs: Expr[]) {
-    if (!exprs) {
-      throw Error(
-        `Empty list of expressions passed to aggregate operation ${op}`
-      );
-    }
-    this.op = op;
-    this.exprs = exprs;
-  }
-
-  execute(sheet: SheetData): CellValue {
-    let args: CellValue[] = this.exprs.map((e) => e.execute(sheet));
-    return aggregateOpTypeToFunction(this.op)(args);
   }
 }
 
@@ -306,14 +348,30 @@ export class Tokenizer {
 }
 
 export class Compiler {
-  parseAsNumber(obj: string, dependencies: Set<Coords>): Expr {
+  parseAsLangConstant(obj: string, _: Set<Coords>): Expr {
+    if (!obj.startsWith("#")) {
+      throw new Error(
+        "Language constants like booleans should start with a '#'"
+      );
+    }
+    const constStr = obj.substr(1).toLowerCase();
+    if (constStr === "t" || constStr === "true") {
+      return new PrimitiveExpr(true);
+    } else if (constStr === "f" || constStr === "false") {
+      return new PrimitiveExpr(false);
+    } else {
+      throw new Error(`Unrecognized constant: ${obj.substr(1)}`);
+    }
+  }
+
+  parseAsNumber(obj: string, _: Set<Coords>): Expr {
     if (isNaN(Number(obj))) {
       throw new Error("not a number!!!!");
     }
     return new PrimitiveExpr(Number(obj));
   }
   // just strips the quotes off the given string if necessary
-  parseAsLangString(expr: string, dependencies: Set<Coords>): Expr {
+  parseAsLangString(expr: string, _: Set<Coords>): Expr {
     if (!(expr.charAt(0) === '"' && expr.charAt(expr.length - 1))) {
       throw Error(
         `String literal ${expr} must be contained within double quotes`
@@ -327,26 +385,29 @@ export class Compiler {
     return ret;
   }
 
-  compileWithDependencies(
-    expr: TokensList | string,
-    dependencies: Set<Coords>
-  ): Expr {
-    console.log(`EXPR: ${expr}`);
+  compileWithDependencies(expr: TokensList, dependencies: Set<Coords>): Expr {
     if (typeof expr === "string") {
+      if (CellRange.isCellRange(expr)) {
+        throw Error(
+          "CellRange isn't a valid primitive and is only recognized" +
+            " as the singular argument to an aggregate operation"
+        );
+      }
       /*
         1. Number
         2. String (Language String)
-        3. CellRef
+        3. Boolean (Language Constant)
+        4. CellRef
       */
       let compiledExpression;
       for (let compilePrimitive of [
         this.parseAsNumber,
         this.parseAsLangString,
+        this.parseAsLangConstant,
         this.parseAsCellRef,
       ]) {
         try {
           compiledExpression = compilePrimitive(expr, dependencies);
-          console.log(`COMPILED: ${compiledExpression}`);
           break;
         } catch {}
       }
@@ -356,46 +417,41 @@ export class Compiler {
       return compiledExpression;
     } else {
       /*
-        1. [ <BinOp> <Expr> <Expr> ]
-        2. [ <AggregateOp> <CellRange> | [<Expr>, <Expr>, ...] ]
+        1. [ <OperationType> <CellRange> | [<Expr>, <Expr>...] ]
+        2. [ <FormType> <Expr>... ]
       */
       if (!expr.length) {
         throw Error(`empty operation ${expr}`);
       }
-      let [operation, ...args] = expr;
+      let [action, ...args] = expr; // action can either be a language operation or language form
 
-      if (Object.values(BinaryOpType).includes(operation as BinaryOpType)) {
-        // Binary Operation
-        if (args.length !== 2) {
-          throw Error(`binary operator takes two values, given ${args}`);
-        }
-        return new BinaryOperation(
-          operation as BinaryOpType,
-          this.compileWithDependencies(args[0], dependencies),
-          this.compileWithDependencies(args[1], dependencies)
-        );
-      } else if (
-        Object.values(AggregateOpType).includes(operation as AggregateOpType)
-      ) {
-        // Aggregate Operation
-        if (args.length === 0) {
-          throw Error(`Aggregate operation given no values: ${expr}`);
-        } else if (args.length === 1 && typeof args[0] === "string") {
+      if (Object.values(OperationType).includes(action as OperationType)) {
+        let compiledArgs;
+        if (
+          args.length === 1 &&
+          typeof args[0] === "string" &&
+          CellRange.isCellRange(args[0])
+        ) {
           // Cell Range
+          // Only recognized and valid when on its own as the only argument
           const cellRefs = new CellRange(args[0]).asCells();
           for (let cellRef of cellRefs) {
             dependencies.add(cellRef.coords);
           }
-          return new AggregateOperation(operation as AggregateOpType, cellRefs);
+          compiledArgs = cellRefs;
         } else {
-          // Multiple Args Case
-          return new AggregateOperation(
-            operation as AggregateOpType,
-            args.map((arg) => this.compileWithDependencies(arg, dependencies))
+          compiledArgs = args.map((arg) =>
+            this.compileWithDependencies(arg, dependencies)
           );
         }
+        return new LanguageOperation(action as OperationType, compiledArgs);
+      } else if (Object.values(FormType).includes(action as FormType)) {
+        return LanguageFormFactory.create(
+          action as FormType,
+          args.map((arg) => this.compileWithDependencies(arg, dependencies))
+        );
       } else {
-        throw Error(`invalid operation ${expr}`);
+        throw Error(`invalid expression ${expr}`);
       }
     }
   }
