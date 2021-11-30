@@ -1,5 +1,7 @@
 // class that stores dependencies between cells
 
+import { CircularReferenceError } from "./errors";
+
 export class DependencyTree {
   private graph: Map<string, Set<string>>;
 
@@ -37,7 +39,7 @@ export class DependencyTree {
           dependency.toString()
         )
       ) {
-        throw new Error(`Circular reference between ${node} and ${dependency}`);
+        throw new CircularReferenceError(node, dependency);
       }
     }
   }

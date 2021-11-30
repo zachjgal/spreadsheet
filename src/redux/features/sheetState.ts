@@ -109,8 +109,8 @@ export const sheetState = createSlice({
     selectExpression: (state, action: PayloadAction<Coords>) => {
       state.selectedExpression = action.payload;
     },
-    setErrorLog: (state, action: PayloadAction<string>) => {
-      state.errorLog = action.payload;
+    handleError: (state, action: PayloadAction<Error>) => {
+      state.errorLog = `${action.payload.name}: ${action.payload.message}`;
     },
   },
 });
