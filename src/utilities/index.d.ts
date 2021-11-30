@@ -1,6 +1,6 @@
 type Coords = [number, number];
 
-type CellValue = string | number;
+type CellValue = string | number | boolean;
 
 type SheetData = CellValue[][];
 

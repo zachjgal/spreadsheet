@@ -2,39 +2,18 @@ import { range as lodashRange } from "lodash";
 
 type TokensList = string[] | TokensList[] | string;
 
-// export class SheetData {
-//   public data: CellValue[][];
-//
-//   constructor(initialRows: number, initialCols: number) {
-//     this.data = [];
-//     this.data.fill([], 0, initialRows);
-//     for (let i: number = 0; i < initialRows; i++) {
-//       this.data[i].fill("", 0, initialCols);
-//     }
-//   }
-//
-//   get numRows(): number {
-//     return this.data.length;
-//   }
-//
-//   get numCols(): number {
-//     return this.data[0].length;
-//   }
-//
-//   insertRow(index?: number) {
-//     index = index ?? this.numRows;
-//     let newRow: CellValue[] = [];
-//     newRow.fill("", 0, this.numCols);
-//     this.data.splice(index, 0, newRow);
-//   }
-//
-//   insertCol(index?: number) {
-//     index = index ?? this.numCols;
-//     for (let row of this.data) {
-//       row.splice(index, 0, "");
-//     }
-//   }
-// }
+enum UnaryOpType {
+  NOT = "NOT",
+}
+
+const unaryOpTypeToFunction = (
+  op: UnaryOpType
+): ((arg: CellValue) => CellValue) => {
+  let unaryOpToFunctionMap = {
+    [UnaryOpType.NOT]: (arg: any) => !arg,
+  };
+  return unaryOpToFunctionMap[op];
+};
 
 enum BinaryOpType {
   ADD = "+",
@@ -42,6 +21,14 @@ enum BinaryOpType {
   DIVIDE = "/",
   SUBTRACT = "-",
   EXPONENT = "^",
+  GREATER_THAN = ">",
+  GREATER_THAN_OR_EQUAL_TO = ">=",
+  LESS_THAN = "<",
+  LESS_THAN_OR_EQUAL_TO = "<=",
+  EQUALS = "=",
+  AND = "AND",
+  OR = "OR",
+  XOR = "XOR",
 }
 
 const binaryOpTypeToFunction = (
@@ -53,6 +40,14 @@ const binaryOpTypeToFunction = (
     [BinaryOpType.MULTIPLY]: (a: any, b: any) => a * b,
     [BinaryOpType.DIVIDE]: (a: any, b: any) => a / b,
     [BinaryOpType.EXPONENT]: (a: any, b: any) => a ** b,
+    [BinaryOpType.GREATER_THAN]: (a: any, b: any) => a > b,
+    [BinaryOpType.GREATER_THAN_OR_EQUAL_TO]: (a: any, b: any) => a >= b,
+    [BinaryOpType.LESS_THAN]: (a: any, b: any) => a < b,
+    [BinaryOpType.LESS_THAN_OR_EQUAL_TO]: (a: any, b: any) => a <= b,
+    [BinaryOpType.EQUALS]: (a: any, b: any) => a === b,
+    [BinaryOpType.AND]: (a: any, b: any) => a && b,
+    [BinaryOpType.OR]: (a: any, b: any) => a || b,
+    [BinaryOpType.XOR]: (a: any, b: any) => a !== b,
   };
   return binaryOpToFunctionMap[op];
 };
@@ -62,6 +57,8 @@ enum AggregateOpType {
   PRODUCT = "PRODUCT",
   AVERAGE = "AVG",
   CONCATENATE = "CONCAT",
+  ALL = "ALL",
+  ANY = "ANY",
 }
 
 const aggregateOpTypeToFunction = (
@@ -76,6 +73,10 @@ const aggregateOpTypeToFunction = (
       args.reduce((sum: any, curr: any) => sum + curr, 0) / args.length,
     [AggregateOpType.CONCATENATE]: (args: any) =>
       args.reduce((sum: any, curr: any) => sum + curr, ""),
+    [AggregateOpType.ALL]: (args: any) =>
+      args.reduce((agg: any, curr: any) => agg && curr, true),
+    [AggregateOpType.ANY]: (args: any) =>
+      args.reduce((agg: any, curr: any) => agg || curr, false),
   };
   return aggregateOpToFunctionMap[op];
 };
@@ -193,14 +194,20 @@ class CellRange {
   asCells(): CellRef[] {
     return this.coords.map((coord) => CellRef.fromCoords(coord));
   }
-  //
-  // execute(sheet: SheetData): CellValue[] {
-  //   let sheetValues: CellValue[] = [];
-  //   for (let coord of this.coords) {
-  //     sheetValues.push(sheet.data[coord[0]][coord[1]]);
-  //   }
-  //   return sheetValues;
-  // }
+}
+
+class UnaryOperation implements Expr {
+  private readonly op: UnaryOpType;
+  private readonly arg: Expr;
+
+  constructor(op: UnaryOpType, arg: Expr) {
+    this.op = op;
+    this.arg = arg;
+  }
+
+  execute(sheet: SheetData): CellValue {
+    return unaryOpTypeToFunction(this.op)(this.arg.execute(sheet));
+  }
 }
 
 class BinaryOperation implements Expr {
@@ -306,6 +313,22 @@ export class Tokenizer {
 }
 
 export class Compiler {
+  parseAsLangConstant(obj: string, dependencies: Set<Coords>): Expr {
+    if (!obj.startsWith("#")) {
+      throw new Error(
+        "Language constants like booleans should start with a '#'"
+      );
+    }
+    const constStr = obj.substr(1).toLowerCase();
+    if (constStr === "t" || constStr === "true") {
+      return new PrimitiveExpr(true);
+    } else if (constStr === "f" || constStr === "false") {
+      return new PrimitiveExpr(false);
+    } else {
+      throw new Error(`Unrecognized constant: ${obj.substr(1)}`);
+    }
+  }
+
   parseAsNumber(obj: string, dependencies: Set<Coords>): Expr {
     if (isNaN(Number(obj))) {
       throw new Error("not a number!!!!");
@@ -336,12 +359,14 @@ export class Compiler {
       /*
         1. Number
         2. String (Language String)
+        3. Boolean (Language Constant)
         3. CellRef
       */
       let compiledExpression;
       for (let compilePrimitive of [
         this.parseAsNumber,
         this.parseAsLangString,
+        this.parseAsLangConstant,
         this.parseAsCellRef,
       ]) {
         try {
@@ -356,15 +381,27 @@ export class Compiler {
       return compiledExpression;
     } else {
       /*
-        1. [ <BinOp> <Expr> <Expr> ]
-        2. [ <AggregateOp> <CellRange> | [<Expr>, <Expr>, ...] ]
+        1. [ <UnaryOp> <Expr> ]
+        2. [ <BinOp> <Expr> <Expr> ]
+        3. [ <AggregateOp> <CellRange> | [<Expr>, <Expr>, ...] ]
       */
       if (!expr.length) {
         throw Error(`empty operation ${expr}`);
       }
       let [operation, ...args] = expr;
 
-      if (Object.values(BinaryOpType).includes(operation as BinaryOpType)) {
+      if (Object.values(UnaryOpType).includes(operation as UnaryOpType)) {
+        // Unary Operation
+        if (args.length !== 1) {
+          throw Error(`unary operator takes exactly 1 value, given ${args}`);
+        }
+        return new UnaryOperation(
+          operation as UnaryOpType,
+          this.compileWithDependencies(args[0], dependencies)
+        );
+      } else if (
+        Object.values(BinaryOpType).includes(operation as BinaryOpType)
+      ) {
         // Binary Operation
         if (args.length !== 2) {
           throw Error(`binary operator takes two values, given ${args}`);
