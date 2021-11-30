@@ -1,6 +1,6 @@
 import React from "react";
 import "./SheetCell.css";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { PayloadAction } from "@reduxjs/toolkit";
 
 type CellDisplayValueProps = {
@@ -21,6 +21,7 @@ export type SheetCellProps = {
   isSelected: boolean;
   value: CellValue;
   onSelect: () => PayloadAction<Coords>;
+  hasError: boolean;
 };
 
 const SheetCell: React.FC<SheetCellProps> = ({
@@ -32,6 +33,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
   return (
     <td
       className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
+      // todo handle cells that have error w/ css
       onClick={() => dispatch(onSelect())}
     >
       <CellDisplayValue value={value} />

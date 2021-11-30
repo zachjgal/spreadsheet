@@ -10,7 +10,7 @@ export type SpreadSheetState = {
   rawExpressions: Map<string, string>;
   sheetData: SheetData;
   selectedExpression: Coords;
-  errorLog: string;
+  errors: Map<string, Error>;
 };
 
 // todo use Array type, not array` literal
@@ -31,7 +31,7 @@ const initialState: SpreadSheetState = {
   rawExpressions: new Map<string, string>(),
   sheetData: initSheetData(),
   selectedExpression: [0, 0],
-  errorLog: "",
+  errors: new Map<string, Error>(),
 };
 
 type EditActionPayload = string;
@@ -72,39 +72,41 @@ export const sheetState = createSlice({
 
       // track raw expr data
       state.rawExpressions.set(cell.toString(), newValue);
-
-      if (isFormulaExpr(newValue)) {
-        const deps = new Set<Coords>();
-        const expr = new Compiler().compileWithDependencies(
-          Tokenizer.tokenize(newValue.substr(isFormulaExpr(newValue) ? 1 : 0)),
-          deps
-        );
-        state.expressions.set(cell.toString(), expr);
-        state.dependencyTree.remove(cell);
-        state.dependencyTree.addDependencies(cell, deps);
-      } else {
-        const [row, col] = cell;
-        state.expressions.delete(cell.toString());
-        state.dependencyTree.remove(cell);
-        // try to convert non formula value into num, otherwise treat as str
-        if (newValue === "" || isNaN(Number(newValue))) {
-          state.sheetData[row][col] = newValue;
+      try {
+        if (isFormulaExpr(newValue)) {
+          const deps = new Set<Coords>();
+          const expr = new Compiler().compileWithDependencies(
+            Tokenizer.tokenize(
+              newValue.substr(isFormulaExpr(newValue) ? 1 : 0)
+            ),
+            deps
+          );
+          state.expressions.set(cell.toString(), expr);
+          state.dependencyTree.remove(cell);
+          state.dependencyTree.addDependencies(cell, deps);
         } else {
-          state.sheetData[row][col] = Number(newValue);
+          const [row, col] = cell;
+          state.expressions.delete(cell.toString());
+          state.dependencyTree.remove(cell);
+          // try to convert non formula value into num, otherwise treat as str
+          if (newValue === "" || isNaN(Number(newValue))) {
+            state.sheetData[row][col] = newValue;
+          } else {
+            state.sheetData[row][col] = Number(newValue);
+          }
         }
+        updateCellAndChildren(cell);
+      } catch (err) {
+        state.errors.set(state.selectedExpression.toString(), err as Error);
       }
-      updateCellAndChildren(cell);
     },
     selectExpression: (state, action: PayloadAction<Coords>) => {
       state.selectedExpression = action.payload;
-    },
-    setErrorLog: (state, action: PayloadAction<string>) => {
-      state.errorLog = action.payload;
     },
   },
 });
 
 const { actions, reducer } = sheetState;
 // Action creators are generated for each case reducer function
-export const { selectExpression, editCell, setErrorLog } = actions;
+export const { selectExpression, editCell } = actions;
 export default reducer;
