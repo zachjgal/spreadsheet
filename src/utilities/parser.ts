@@ -1,6 +1,6 @@
 import { range as lodashRange } from "lodash";
 
-type TokensList = string[] | TokensList[] | string;
+type TokensList = string | TokensList[];
 
 enum OperationType {
   // Unary

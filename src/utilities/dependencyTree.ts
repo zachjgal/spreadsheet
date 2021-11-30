@@ -69,6 +69,9 @@ export class DependencyTree {
     let stack: Array<string> = new Array<string>();
     let universe: Array<string>;
     if (start) {
+      if (!this.graph.has(start.toString())) {
+        return [];
+      }
       universe = new Array<string>();
       universe.push(start.toString());
     } else {

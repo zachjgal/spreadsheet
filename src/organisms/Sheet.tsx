@@ -1,13 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import lodashRange from "lodash/range";
 import "./Sheet.css";
 import SheetCell from "../molecules/SheetCell";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import {
-  selectExpression,
-  SpreadSheetState,
-} from "../redux/features/sheetState";
+import { selectExpression } from "../redux/features/sheetState";
 import { CellRef } from "../utilities/parser";
 
 const Sheet: React.FC = () => {
