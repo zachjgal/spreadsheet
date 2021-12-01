@@ -61,15 +61,18 @@ const SheetCell: React.FC<SheetCellProps> = ({
   };
 
   return isEditMode ? (
-    <input
-      className="cell-block"
-      value={cellValue}
-      ref={inputRef}
-      onChange={(e) => {
-        setCellValue(e.target.value);
-      }}
-      onKeyDown={onDefocusInputHandler}
-    />
+    <td>
+      <input
+        className="cell-block"
+        style={{ width: "100px" }}
+        value={cellValue}
+        ref={inputRef}
+        onChange={(e) => {
+          setCellValue(e.target.value);
+        }}
+        onKeyDown={onDefocusInputHandler}
+      />
+    </td>
   ) : (
     <td
       className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
@@ -80,7 +83,9 @@ const SheetCell: React.FC<SheetCellProps> = ({
         dispatch(onSelect());
       }}
     >
-      <CellDisplayValue value={hasError ? "ERROR" : value} />
+      <div style={{ width: "100px" }}>
+        <CellDisplayValue value={hasError ? "ERROR" : value} />
+      </div>
     </td>
   );
 };
