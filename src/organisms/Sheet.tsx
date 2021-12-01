@@ -1,13 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import lodashRange from "lodash/range";
 import "./Sheet.css";
 import SheetCell from "../molecules/SheetCell";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import {
-  selectExpression,
-  SpreadSheetState,
-} from "../redux/features/sheetState";
+import { selectExpression } from "../redux/features/sheetState";
 import { CellRef } from "../utilities/parser";
 
 const Sheet: React.FC = () => {
@@ -17,8 +14,17 @@ const Sheet: React.FC = () => {
   const selectedCell: Coords = useSelector(
     (state: RootState) => state.data.selectedExpression
   );
-
   const [height, width] = [data.length, data[0].length];
+  const hasError: boolean[][] = useSelector((state: RootState) => {
+    let ret: boolean[][] = [];
+    for (let i: number = 0; i < height; i++) {
+      ret[i] = [];
+      for (let j: number = 0; j < width; j++) {
+        ret[i][j] = state.data.errors.has([i, j].toString());
+      }
+    }
+    return ret;
+  });
 
   return (
     <div className="spreadsheet-container">
@@ -42,6 +48,7 @@ const Sheet: React.FC = () => {
                   }
                   value={data[rowInd][colInd]}
                   onSelect={() => selectExpression([rowInd, colInd])}
+                  hasError={hasError[rowInd][colInd]}
                 />
               ) : (
                 <td style={{ minWidth: "24px" }}>{rowInd + 1}</td>

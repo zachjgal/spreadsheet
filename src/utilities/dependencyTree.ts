@@ -1,5 +1,7 @@
 // class that stores dependencies between cells
 
+import { CircularReferenceError } from "./errors";
+
 export class DependencyTree {
   private graph: Map<string, Set<string>>;
 
@@ -37,7 +39,7 @@ export class DependencyTree {
           dependency.toString()
         )
       ) {
-        throw new Error(`Circular reference between ${node} and ${dependency}`);
+        throw new CircularReferenceError(node, dependency);
       }
     }
   }
@@ -69,6 +71,9 @@ export class DependencyTree {
     let stack: Array<string> = new Array<string>();
     let universe: Array<string>;
     if (start) {
+      if (!this.graph.has(start.toString())) {
+        return [];
+      }
       universe = new Array<string>();
       universe.push(start.toString());
     } else {

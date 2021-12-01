@@ -1,9 +1,1 @@
-.formula-bar-container {
-    position: -webkit-sticky; /* Safari */
-    position: sticky;
-    top: 0;
-    background-color: white;
-}
-.formula-bar {
-    width: calc(100% - calc(100vw - 100%))
-}
+/* TODO */
