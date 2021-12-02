@@ -11,7 +11,6 @@ export type SpreadSheetState = {
   sheetData: SheetData;
   selectedExpression: Coords;
   errors: Map<string, Error>;
-  currentFormulaInput: string;
 };
 
 // todo use Array type, not array` literal
@@ -29,11 +28,10 @@ const initSheetData = (initWidth = 58, initHeight = 58) => {
 const initialState: SpreadSheetState = {
   dependencyTree: new DependencyTree(),
   expressions: new Map<string, Expr>(),
-  rawExpressions: new Map<string, string>(),
+  rawExpressions: new Map<string, string>(), // '1,3'
   sheetData: initSheetData(),
   selectedExpression: [0, 0],
   errors: new Map<string, Error>(),
-  currentFormulaInput: "",
 };
 
 type EditActionPayload = string;
@@ -111,6 +109,40 @@ export const sheetState = createSlice({
     // setCurrentFormulaInput: (state, action: PayloadAction<string>) => {
     //   state.currentFormulaInput = action.payload;
     // },
+    addRow: (state, action: PayloadAction<number>) => {
+      let index = action.payload;
+      let [selectedRow, selectedCol] = state.selectedExpression;
+      // if added row is above selected expression, our selected
+      // expression should move down one. otherwise don't change it
+      if (index < selectedRow) {
+        state.selectedExpression = [selectedRow + 1, selectedCol];
+      }
+      // update all maps with offset coordinates
+      // Move the data, just down for now
+      // don't assume any of this is anything you need to use
+      let newData: Map<string, string> = new Map<string, string>();
+      for (let i: number = index; i < state.sheetData.length; i++) {
+        for (let j: number = 0; j < state.sheetData[0].length; j++) {
+          let rowBuffer = state.rawExpressions.get([i, j].toString());
+          //
+        }
+        // let newSheetData: SheetData = []
+        // basically apply offsets to all maps and also the tree which will be kind of funky. don't try to
+        // maybe use array.copy or whatever for the sheet data, the maps will just be dumb string processing
+        // implement the dynamic update logic on each and every cell
+      }
+    },
+
+    addCol: (state, action: PayloadAction<number>) => {
+      // if added column is to the left of selected expression, our
+      // selected expression should move right one
+      let index = action.payload;
+      let [selectedRow, selectedCol] = state.selectedExpression;
+      if (index < selectedCol) {
+        state.selectedExpression = [selectedRow, selectedCol + 1];
+      }
+      // Move the data
+    },
   },
 });
 
