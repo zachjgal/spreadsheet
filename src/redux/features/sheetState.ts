@@ -11,6 +11,7 @@ export type SpreadSheetState = {
   sheetData: SheetData;
   selectedExpression: Coords;
   errors: Map<string, Error>;
+  currentFormulaInput: string;
 };
 
 // todo use Array type, not array` literal
@@ -32,6 +33,7 @@ const initialState: SpreadSheetState = {
   sheetData: initSheetData(),
   selectedExpression: [0, 0],
   errors: new Map<string, Error>(),
+  currentFormulaInput: "",
 };
 
 type EditActionPayload = string;
@@ -106,6 +108,9 @@ export const sheetState = createSlice({
     selectExpression: (state, action: PayloadAction<Coords>) => {
       state.selectedExpression = action.payload;
     },
+    // setCurrentFormulaInput: (state, action: PayloadAction<string>) => {
+    //   state.currentFormulaInput = action.payload;
+    // },
   },
 });
 
