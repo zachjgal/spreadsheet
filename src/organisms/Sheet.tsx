@@ -7,7 +7,11 @@ import { RootState } from "../redux/store";
 import { selectExpression } from "../redux/features/sheetState";
 import { CellRef } from "../utilities/parser";
 
-const Sheet: React.FC = () => {
+export type SheetProps = {
+  setMonitor: (data: string) => void;
+};
+
+const Sheet: React.FC<SheetProps> = ({ setMonitor }) => {
   const data: SheetData = useSelector(
     (state: RootState) => state.data.sheetData
   );
@@ -46,6 +50,7 @@ const Sheet: React.FC = () => {
                   isSelected={
                     [rowInd, colInd].toString() === selectedCell.toString()
                   }
+                  setMonitor={setMonitor}
                   value={data[rowInd][colInd]}
                   onSelect={() => selectExpression([rowInd, colInd])}
                   hasError={hasError[rowInd][colInd]}

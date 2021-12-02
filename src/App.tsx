@@ -6,12 +6,14 @@ import Navigator from "./organisms/Navigator";
 
 function App() {
   const [navigator, setNavigator] = useState("edit");
+  const [monitor, setMonitor] = useState("");
   return (
     <div className="main-container">
       <Navigator navigator={navigator} setNavigator={setNavigator} />
       <FormulaBar />
+      <div>{monitor}</div>
       <ErrorBar />
-      <Sheet />
+      <Sheet setMonitor={setMonitor}/>
     </div>
   );
 }

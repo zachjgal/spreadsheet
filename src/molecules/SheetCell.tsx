@@ -29,14 +29,17 @@ const CellDisplayValue: React.FC<CellDisplayValueProps> = ({ value }) => {
 
 export type SheetCellProps = {
   isSelected: boolean;
+  setMonitor: (data: string) => void;
   value: CellValue;
   onSelect: () => PayloadAction<Coords>;
   hasError: boolean;
+  
 };
 
 const SheetCell: React.FC<SheetCellProps> = ({
   value,
   onSelect,
+  setMonitor,
   isSelected,
   hasError,
 }) => {
@@ -65,6 +68,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
       setIsEditMode(false);
       dispatch(editCell(cellValue));
       changeInputToLabel();
+      setMonitor("");
     }
   };
 
@@ -81,6 +85,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
         ref={inputRef}
         onChange={(e) => {
           setCellValue(e.currentTarget.value);
+          setMonitor(e.currentTarget.value);
           //dispatch(setCurrentFormulaInput(e.currentTarget.value));
         }}
         onKeyDown={onDefocusInputHandler}
@@ -94,6 +99,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
         // todo get state from formula bar / handle update
         dispatch(onSelect());
         changeLabeltoInput();
+        setMonitor(cellValue)
       }}
     >
       <div style={{ width: "100px" }}>
