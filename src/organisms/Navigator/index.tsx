@@ -17,40 +17,36 @@ const Navigator: FunctionComponent<NavigatorProps> = (props) => {
   ];
   return (
     <div>
-      <div>
-        <ul className="nav nav-tabs">
-          {navigationBar.map((nav, navIdx) => {
-            return (
-              <li
-                className="nav-item cursor-pointer"
-                onClick={() => {
-                  props.setNavigator(nav.key);
-                }}
+      <ul className="nav nav-tabs">
+        {navigationBar.map((nav, navIdx) => {
+          return (
+            <li
+              className="nav-item cursor-pointer"
+              onClick={() => {
+                props.setNavigator(nav.key);
+              }}
+            >
+              <div
+                className={`nav-link ${
+                  props.navigator == nav.key && "active"
+                } text-capitalize `}
               >
-                <div
-                  className={`nav-link ${
-                    props.navigator == nav.key && "active"
-                  } text-capitalize `}
-                >
-                  {" "}
-                  {nav.key}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        <ul className="d-flex">
-          {navigationBar.map((nav, navIdx) => {
-            return (
-              <li
-                className={props.navigator === nav.key ? "d-block" : "d-none"}
-              >
-                {nav.component}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                {" "}
+                {nav.key}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <ul className="d-flex mb-0 ml-0 px-0">
+        {navigationBar.map((nav, navIdx) => {
+          return (
+            <li className={props.navigator === nav.key ? "d-block" : "d-none"}>
+              {nav.component}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 };

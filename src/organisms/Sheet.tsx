@@ -38,7 +38,7 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor }) => {
             colInd === -1 ? (
               <th>{"   "}</th>
             ) : (
-              <th>{CellRef.makeCol(colInd)}</th>
+              <th className="text-center">{CellRef.makeCol(colInd)}</th>
             )
           )}
         </tr>

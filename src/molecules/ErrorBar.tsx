@@ -1,8 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-
-// import "./ErrorBar.css";
+import "./ErrorBar.css";
 
 export type ErrorBarProps = {};
 
@@ -17,10 +16,10 @@ const ErrorBar: React.FC<ErrorBarProps> = () => {
   });
 
   return (
-    <div>
-      <p>
-        <td>{error}</td>
-      </p>
+    <div className="error-container">
+     
+        {error}
+     
     </div>
   );
 };

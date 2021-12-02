@@ -3,6 +3,7 @@ import Sheet from "./organisms/Sheet";
 import FormulaBar from "./molecules/FormulaBar";
 import ErrorBar from "./molecules/ErrorBar";
 import Navigator from "./organisms/Navigator";
+import "./App.css"
 
 function App() {
   const [navigator, setNavigator] = useState("edit");
@@ -11,7 +12,7 @@ function App() {
     <div className="main-container">
       <Navigator navigator={navigator} setNavigator={setNavigator} />
       <FormulaBar />
-      <div>{monitor}</div>
+      <div className="sheet-monitor">{monitor}</div>
       <ErrorBar />
       <Sheet setMonitor={setMonitor}/>
     </div>

@@ -33,7 +33,6 @@ export type SheetCellProps = {
   value: CellValue;
   onSelect: () => PayloadAction<Coords>;
   hasError: boolean;
-  
 };
 
 const SheetCell: React.FC<SheetCellProps> = ({
@@ -45,8 +44,14 @@ const SheetCell: React.FC<SheetCellProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
-  const [done, setDone] = useState(false);
   const [cellValue, setCellValue] = useState("");
+  
+  // font chnages
+  const [cellFontSize, setCellFontSize] = useState();
+  const [cellFont, setCellFont] = useState();
+  const [bold, setBold] = useState();
+  const [italic, setItalic] = useState(); 
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   const changeLabeltoInput = () => {

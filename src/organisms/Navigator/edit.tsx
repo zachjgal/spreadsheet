@@ -19,15 +19,15 @@ const Edit: FunctionComponent<EditProps> = (props) => {
     },
     {
       key: "size",
-      data: <div className="col-xl-4">10</div>,
+      data: <div className=" font-nav">10</div>,
     },
     {
       key: "bold",
-      data: <div className="col-xl-4">B</div>,
+      data: <div className=" font-nav fw-bold">B</div>,
     },
     {
       key: "italic",
-      data: <div className="col-xl-4">I</div>,
+      data: <div className="font-nav fst-italic">I</div>,
     },
   ];
 
