@@ -10,7 +10,7 @@ import "./SheetCell.css";
 import { useDispatch, useSelector } from "react-redux";
 import { PayloadAction } from "@reduxjs/toolkit";
 //import { editCell, setCurrentFormulaInput } from "../redux/features/sheetState";
-import { editCell } from "../redux/features/sheetState";
+import { editCell, getFontData } from "../redux/features/sheetState";
 import { RootState } from "../redux/store";
 
 type CellDisplayValueProps = {
@@ -30,27 +30,43 @@ const CellDisplayValue: React.FC<CellDisplayValueProps> = ({ value }) => {
 export type SheetCellProps = {
   isSelected: boolean;
   setMonitor: (data: string) => void;
+  setX: (data: number) => void;
+  setY: (data: number) => void;
   value: CellValue;
+  rowInd: number;
+  colInd: number;
   onSelect: () => PayloadAction<Coords>;
   hasError: boolean;
 };
 
+type FontData = {
+  font: string;
+  size: number;
+  bold: boolean;
+  italic: boolean;
+};
+
 const SheetCell: React.FC<SheetCellProps> = ({
   value,
+  rowInd,
+  colInd,
   onSelect,
   setMonitor,
+  setX,
+  setY,
   isSelected,
   hasError,
 }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
   const [cellValue, setCellValue] = useState("");
-  
-  // font chnages
-  const [cellFontSize, setCellFontSize] = useState();
-  const [cellFont, setCellFont] = useState();
-  const [bold, setBold] = useState();
-  const [italic, setItalic] = useState(); 
+
+  // for fonts
+  const [fontData, SetFontData] = useState<FontData>();
+  const [font, setFont] = useState("");
+  const [size, setSize] = useState(10);
+  const [bold, setBold] = useState(false);
+  const [italic, setItalic] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +107,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
         onChange={(e) => {
           setCellValue(e.currentTarget.value);
           setMonitor(e.currentTarget.value);
-          //dispatch(setCurrentFormulaInput(e.currentTarget.value));
+          dispatch(getFontData([rowInd, colInd]));
         }}
         onKeyDown={onDefocusInputHandler}
       />
@@ -104,7 +120,9 @@ const SheetCell: React.FC<SheetCellProps> = ({
         // todo get state from formula bar / handle update
         dispatch(onSelect());
         changeLabeltoInput();
-        setMonitor(cellValue)
+        setX(rowInd);
+        setY(colInd);
+        setMonitor(cellValue);
       }}
     >
       <div style={{ width: "100px" }}>

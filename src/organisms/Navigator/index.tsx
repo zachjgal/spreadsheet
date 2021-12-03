@@ -6,13 +6,15 @@ import Setting from "./setting";
 
 export type NavigatorProps = {
   navigator: string;
+  x: number,
+  y: number,
   setNavigator: (arg: string) => void;
 };
 
 const Navigator: FunctionComponent<NavigatorProps> = (props) => {
   const navigationBar = [
     { key: "file", component: <File /> },
-    { key: "edit", component: <Edit /> },
+    { key: "edit", component: <Edit x={props.x} y={props.y} /> },
     { key: "settings", component: <Setting /> },
   ];
   return (

@@ -9,9 +9,11 @@ import { CellRef } from "../utilities/parser";
 
 export type SheetProps = {
   setMonitor: (data: string) => void;
+  setX: (data: number) => void;
+  setY: (data: number) => void;
 };
 
-const Sheet: React.FC<SheetProps> = ({ setMonitor }) => {
+const Sheet: React.FC<SheetProps> = ({ setMonitor, setX, setY }) => {
   const data: SheetData = useSelector(
     (state: RootState) => state.data.sheetData
   );
@@ -51,6 +53,10 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor }) => {
                     [rowInd, colInd].toString() === selectedCell.toString()
                   }
                   setMonitor={setMonitor}
+                  setX={setX}
+                  setY={setY}
+                  rowInd={rowInd}
+                  colInd={colInd}
                   value={data[rowInd][colInd]}
                   onSelect={() => selectExpression([rowInd, colInd])}
                   hasError={hasError[rowInd][colInd]}
