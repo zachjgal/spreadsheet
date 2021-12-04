@@ -14,75 +14,54 @@ export type EditProps = {
   y: number;
 };
 
+type FontEdit = {
+  coords: Coords;
+  data: string;
+};
+
+type SizeEdit = {
+  coords: Coords;
+  data: number;
+};
+
+type TypeEdit = {
+  coords: Coords;
+  data: boolean;
+};
+
 const Edit: FunctionComponent<EditProps> = (props) => {
   const dispatch = useDispatch();
-
-  const fontdata: FontSheetData = useSelector(
-    (state: RootState) => state.data.fontSheetData
-  );
-  const fontInfo = fontdata[props.x][props.y];
-
   const [nav, setNav] = useState("");
-  const [font, setFont] = useState("Open Sans");
-  const [size, setSize] = useState(10);
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
 
-  type FontEdit = {
-    coords: Coords;
-    data: string;
-  };
+  const fontInfo = useSelector(
+    (state: RootState) => state.data.fontSheetData[props.x][props.y]
+  );
 
-  type SizeEdit = {
-    coords: Coords;
-    data: number;
-  };
-
-  type TypeEdit = {
-    coords: Coords;
-    data: boolean;
-  };
-
-  const changeFontInfo = (arg: string) => {
+  const changeFontInfo = (arg: string, payload?: any) => {
     if (arg === "bold") {
-      if (bold === false) {
-        setBold(true);
-      } else {
-        setBold(false);
-      }
       const changeBold: TypeEdit = {
         coords: [props.x, props.y],
-        data: bold == undefined || bold == false ? false : true,
+        data: !fontInfo.bold,
       };
       dispatch(editBold(changeBold));
-      dispatch(getFontData([props.x, props.y]));
     } else if (arg === "italic") {
-      setItalic(!italic);
-      if (italic === false) {
-        setItalic(true);
-      } else {
-        setItalic(false);
-      }
       const changeItalic: TypeEdit = {
         coords: [props.x, props.y],
-        data: italic,
+        data: !fontInfo.italic,
       };
       dispatch(editItalic(changeItalic));
-      dispatch(getFontData([props.x, props.y]));
     } else if (arg === "size") {
       const changeSize: SizeEdit = {
         coords: [props.x, props.y],
-        data: size,
+        data: payload as number,
       };
       dispatch(editSize(changeSize));
-      dispatch(getFontData([props.x, props.y]));
     } else {
       const changeFont: FontEdit = {
         coords: [props.x, props.y],
-        data: font,
+        data: payload as string,
       };
       dispatch(editFonts(changeFont));
-      dispatch(getFontData([props.x, props.y]));
     }
   };
 
@@ -99,10 +78,6 @@ const Edit: FunctionComponent<EditProps> = (props) => {
       key: "font",
       data: (
         <FontsDropDown
-          font={font}
-          setFont={setFont}
-          nav={nav}
-          setNav={setNav}
           changeFontInfo={changeFontInfo}
         />
       ),
@@ -113,8 +88,6 @@ const Edit: FunctionComponent<EditProps> = (props) => {
         <FontSizeDropDown
           nav={nav}
           setNav={setNav}
-          size={size}
-          setSize={setSize}
           changeFontInfo={changeFontInfo}
         />
       ),
@@ -157,25 +130,22 @@ const Edit: FunctionComponent<EditProps> = (props) => {
 };
 
 export type FontsProps = {
-  nav: string;
-  font: string;
-  setFont: (arg: string) => void;
-  setNav: (arg: string) => void;
-  changeFontInfo: (arg: string) => void;
+  changeFontInfo: (arg: string, payload?: any) => void;
 };
 
 const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
+  const [font, setFont] = useState("Open Sans");
   return (
     <>
       <div>
         <FontPicker
           apiKey="AIzaSyAMo73RrEPCwV-zygT3ibodMsxelIm26Lw"
-          activeFontFamily={props.font}
+          activeFontFamily={font}
           limit={1000}
           variants={["regular", "italic", "600", "700", "700italic"]}
           onChange={(nextFont) => {
-            props.setFont(nextFont.family);
-            props.changeFontInfo("font");
+            setFont(nextFont.family);
+            props.changeFontInfo("font", nextFont.family);
           }}
         />
       </div>
@@ -291,12 +261,11 @@ const DeleteDropDown: FunctionComponent<DeleteProps> = (props) => {
 export type FontSizeProps = {
   nav: string;
   setNav: (arg: string) => void;
-  size: number;
-  setSize: (arg: number) => void;
-  changeFontInfo: (arg: string) => void;
+  changeFontInfo: (arg: string, payload?: any) => void;
 };
 
 const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
+  const [size, setSize] = useState(10);
   const sizeArray = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   ];
@@ -321,7 +290,7 @@ const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
           aria-haspopup="true"
           aria-expanded="false"
         >
-          {props.size}
+          {size}
         </a>
         <div
           className={`dropdown-menu ${props.nav === "fontsize" && "show"}`}
@@ -333,8 +302,8 @@ const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
                 className="dropdown-item"
                 href="#"
                 onClick={() => {
-                  props.setSize(elem);
-                  props.changeFontInfo("size");
+                  setSize(elem);
+                  props.changeFontInfo("size", elem);
                 }}
               >
                 {elem}
