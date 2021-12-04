@@ -129,7 +129,6 @@ export const sheetState = createSlice({
     },
 
     getFontData: (state, action: PayloadAction<Coords>) => {
-      
       //To do, pass in the cell and get the font data associated with the cell
       let x = action.payload[0];
       let y = action.payload[1];
@@ -139,29 +138,62 @@ export const sheetState = createSlice({
         bold: state.fontSheetData[x][y].bold,
         italic: state.fontSheetData[x][y].italic,
       };
-      console.log(x)
-      console.log(y)
+      console.log(x);
+      console.log(y);
       console.log(fontData);
     },
 
     editFontData: (state, action: PayloadAction<FontInput>) => {
       //To do, pass in the cell and get the font data associated with the cell
-      console.log("I am here")
-      let x = action.payload.coords[0];
-      let y = action.payload.coords[1];
-      state.fontSheetData[x][y].font = action.payload.data.font;
-      state.fontSheetData[x][y].size = action.payload.data.size;
-      state.fontSheetData[x][y].bold = action.payload.data.bold;
-      state.fontSheetData[x][y].italic = action.payload.data.italic;
+      // console.log("I am here")
+      // let x = action.payload.coords[0];
+      // let y = action.payload.coords[1];
+      // state.fontSheetData[x][y].font = action.payload.data.font;
+      // state.fontSheetData[x][y].size = action.payload.data.size;
+      // state.fontSheetData[x][y].bold = action.payload.data.bold;
+      // state.fontSheetData[x][y].italic = action.payload.data.italic;
     },
 
-    // setCurrentFormulaInput: (state, action: PayloadAction<string>) => {
-    //   state.currentFormulaInput = action.payload;
-    // },
+    editFonts: (state, action: PayloadAction<FontEdit>) => {
+      console.log("Here to edit font");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].font = action.payload.data;
+    },
+
+    editSize: (state, action: PayloadAction<SizeEdit>) => {
+      console.log("Here to edit font");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].size = action.payload.data;
+    },
+
+    editBold: (state, action: PayloadAction<TypeEdit>) => {
+      console.log("Here to edit Bold");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].bold = action.payload.data;
+    },
+
+    editItalic: (state, action: PayloadAction<TypeEdit>) => {
+      console.log("Here to edit italic");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].italic = action.payload.data;
+    },
   },
 });
 
 const { actions, reducer } = sheetState;
 // Action creators are generated for each case reducer function
-export const { selectExpression, editCell, getFontData, editFontData } = actions;
+export const {
+  selectExpression,
+  editCell,
+  getFontData,
+  editFontData,
+  editFonts,
+  editBold,
+  editItalic,
+  editSize,
+} = actions;
 export default reducer;

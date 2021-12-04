@@ -1,47 +1,89 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
 import FontPicker from "font-picker-react";
 import { useDispatch, useSelector } from "react-redux";
-import { editFontData, getFontData } from "../../redux/features/sheetState";
+import { RootState } from "../../redux/store";
+import {
+  editFonts,
+  editItalic,
+  editSize,
+  editBold,
+  getFontData,
+} from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;
   y: number;
 };
 
-type FontData = {
-  font: string;
-  size: number;
-  bold: boolean;
-  italic: boolean;
-};
-
-type Coords = [number, number];
-
-type FontInput = {
-  coords: Coords;
-  data: FontData;
-};
-
 const Edit: FunctionComponent<EditProps> = (props) => {
   const dispatch = useDispatch();
+
+  const fontdata: FontSheetData = useSelector(
+    (state: RootState) => state.data.fontSheetData
+  );
+  const fontInfo = fontdata[props.x][props.y];
+
   const [nav, setNav] = useState("");
-  const [font, setFont] = useState("Open Sans");
+  const [font, setFont] = useState("");
   const [size, setSize] = useState(10);
   const [bold, setBold] = useState(false);
   const [italic, setItalic] = useState(false);
 
-  const sendFontData = () => {
-    let fdata: FontData = {
-      font: font,
-      size: size,
-      bold: bold,
-      italic: italic,
-    };
-    let coord: Coords = [props.x, props.y];
-    let data: FontInput = {
-      coords: coord,
-      data: fdata,
-    };
-    dispatch(editFontData(data));
+  type FontEdit = {
+    coords: Coords;
+    data: string;
+  };
+
+  type SizeEdit = {
+    coords: Coords;
+    data: number;
+  };
+
+  type TypeEdit = {
+    coords: Coords;
+    data: boolean;
+  };
+
+  const changeFontInfo = (arg: string) => {
+    if (arg === "bold") {
+      if (bold === false) {
+        setBold(true);
+      } else {
+        setBold(false);
+      }
+      const changeBold: TypeEdit = {
+        coords: [props.x, props.y],
+        data: bold == undefined || bold == false ? false : true,
+      };
+      dispatch(editBold(changeBold));
+      dispatch(getFontData([props.x, props.y]));
+    } else if (arg === "italic") {
+      setItalic(!italic);
+      if (italic === false) {
+        setItalic(true);
+      } else {
+        setItalic(false);
+      }
+      const changeItalic: TypeEdit = {
+        coords: [props.x, props.y],
+        data: italic,
+      };
+      dispatch(editItalic(changeItalic));
+      dispatch(getFontData([props.x, props.y]));
+    } else if (arg === "size") {
+      const changeSize: SizeEdit = {
+        coords: [props.x, props.y],
+        data: size,
+      };
+      dispatch(editSize(changeSize));
+      dispatch(getFontData([props.x, props.y]));
+    } else {
+      const changeFont: FontEdit = {
+        coords: [props.x, props.y],
+        data: font,
+      };
+      dispatch(editFonts(changeFont));
+      dispatch(getFontData([props.x, props.y]));
+    }
   };
 
   const editNavigation = [
@@ -61,7 +103,7 @@ const Edit: FunctionComponent<EditProps> = (props) => {
           setFont={setFont}
           nav={nav}
           setNav={setNav}
-          sendFontData={sendFontData}
+          changeFontInfo={changeFontInfo}
         />
       ),
     },
@@ -75,9 +117,7 @@ const Edit: FunctionComponent<EditProps> = (props) => {
         <div
           className=" font-nav fw-bold"
           onClick={() => {
-            setBold(!bold);
-            sendFontData();
-            dispatch(getFontData([props.x, props.y]));
+            changeFontInfo("bold");
           }}
         >
           B
@@ -90,9 +130,7 @@ const Edit: FunctionComponent<EditProps> = (props) => {
         <div
           className="font-nav fst-italic"
           onClick={() => {
-            setItalic(!italic);
-            sendFontData();
-            dispatch(getFontData([props.x, props.y]));
+            changeFontInfo("italic");
           }}
         >
           I
@@ -115,7 +153,7 @@ export type FontsProps = {
   font: string;
   setFont: (arg: string) => void;
   setNav: (arg: string) => void;
-  sendFontData: () => void;
+  changeFontInfo: (arg: string) => void;
 };
 
 const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
@@ -129,7 +167,7 @@ const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
           variants={["regular", "italic", "600", "700", "700italic"]}
           onChange={(nextFont) => {
             props.setFont(nextFont.family);
-            props.sendFontData();
+            props.changeFontInfo("font");
           }}
         />
         {/* <p className="apply-font">The font will be applied to this text.</p> */}
