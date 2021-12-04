@@ -17,6 +17,9 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor, setX, setY }) => {
   const data: SheetData = useSelector(
     (state: RootState) => state.data.sheetData
   );
+  const fontdata: FontSheetData = useSelector(
+    (state: RootState) => state.data.fontSheetData
+  );
   const selectedCell: Coords = useSelector(
     (state: RootState) => state.data.selectedExpression
   );
@@ -58,6 +61,7 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor, setX, setY }) => {
                   rowInd={rowInd}
                   colInd={colInd}
                   value={data[rowInd][colInd]}
+                  fontData={fontdata[rowInd][colInd]}
                   onSelect={() => selectExpression([rowInd, colInd])}
                   hasError={hasError[rowInd][colInd]}
                 />
