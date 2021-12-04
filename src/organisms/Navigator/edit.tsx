@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
 import FontPicker from "font-picker-react";
 import { useDispatch, useSelector } from "react-redux";
-import { editFontData, getFontData } from "../../redux/features/sheetState";
+import { editFontData,addRowBelow,addColumnLeft,addRowAbove,addColumnRight ,getFontData } from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;
   y: number;
@@ -144,6 +144,7 @@ export type InsertProps = {
 };
 
 const InsertDropDown: FunctionComponent<InsertProps> = (props) => {
+  const dispatch = useDispatch();
   return (
     <>
       <div
@@ -171,16 +172,16 @@ const InsertDropDown: FunctionComponent<InsertProps> = (props) => {
           className={`dropdown-menu ${props.nav === "insert" && "show"}`}
           aria-labelledby="dropdownMenuLink"
         >
-          <a className="dropdown-item" href="#">
+          <a className="dropdown-item" href="#" onClick= { ()=>{dispatch(addRowAbove())}}>
             Row Above
           </a>
-          <a className="dropdown-item" href="#">
+          <a className="dropdown-item" href="#" onClick= { ()=>{dispatch(addRowBelow())}}>
             Row Below
           </a>
-          <a className="dropdown-item" href="#">
+          <a className="dropdown-item" href="#"  onClick= { ()=>{dispatch(addColumnLeft())}}>
             Column Left
           </a>
-          <a className="dropdown-item" href="#">
+          <a className="dropdown-item" href="#"  onClick= { ()=>{dispatch(addColumnRight())}}>
             Column Right
           </a>
           <a className="dropdown-item" href="#">

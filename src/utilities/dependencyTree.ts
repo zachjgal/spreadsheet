@@ -8,6 +8,9 @@ export class DependencyTree {
   constructor() {
     this.graph = new Map<string, Set<string>>();
   }
+  getGraph() {
+    return this.graph
+  }
 
   toString() {
     return JSON.stringify(
