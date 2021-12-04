@@ -19,7 +19,7 @@ type CellDisplayValueProps = {
 
 const CellDisplayValue: React.FC<CellDisplayValueProps> = ({ value }) => {
   if (typeof value === "string") {
-    return <i>{value}</i>;
+    return <span>{value}</span>;
   } else if (typeof value === "boolean") {
     return <React.Fragment>{`${value}`}</React.Fragment>;
   } else {

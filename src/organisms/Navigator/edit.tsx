@@ -23,7 +23,7 @@ const Edit: FunctionComponent<EditProps> = (props) => {
   const fontInfo = fontdata[props.x][props.y];
 
   const [nav, setNav] = useState("");
-  const [font, setFont] = useState("");
+  const [font, setFont] = useState("Open Sans");
   const [size, setSize] = useState(10);
   const [bold, setBold] = useState(false);
   const [italic, setItalic] = useState(false);
@@ -109,7 +109,15 @@ const Edit: FunctionComponent<EditProps> = (props) => {
     },
     {
       key: "size",
-      data: <div className=" font-nav">10</div>,
+      data: (
+        <FontSizeDropDown
+          nav={nav}
+          setNav={setNav}
+          size={size}
+          setSize={setSize}
+          changeFontInfo={changeFontInfo}
+        />
+      ),
     },
     {
       key: "bold",
@@ -170,7 +178,6 @@ const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
             props.changeFontInfo("font");
           }}
         />
-        {/* <p className="apply-font">The font will be applied to this text.</p> */}
       </div>
     </>
   );
@@ -275,6 +282,65 @@ const DeleteDropDown: FunctionComponent<DeleteProps> = (props) => {
           <a className="dropdown-item" href="#">
             Column Right
           </a>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export type FontSizeProps = {
+  nav: string;
+  setNav: (arg: string) => void;
+  size: number;
+  setSize: (arg: number) => void;
+  changeFontInfo: (arg: string) => void;
+};
+
+const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
+  const sizeArray = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  ];
+  return (
+    <>
+      <div
+        className="dropdown show"
+        onClick={() => {
+          if (props.nav === "fontsize") {
+            props.setNav("");
+          } else {
+            props.setNav("fontsize");
+          }
+        }}
+      >
+        <a
+          className="btn btn-secondary dropdown-toggle"
+          href="#"
+          role="button"
+          id="dropdownMenuLink"
+          data-toggle="dropdown"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
+          {props.size}
+        </a>
+        <div
+          className={`dropdown-menu ${props.nav === "fontsize" && "show"}`}
+          aria-labelledby="dropdownMenuLink"
+        >
+          {sizeArray.map((elem) => {
+            return (
+              <a
+                className="dropdown-item"
+                href="#"
+                onClick={() => {
+                  props.setSize(elem);
+                  props.changeFontInfo("size");
+                }}
+              >
+                {elem}
+              </a>
+            );
+          })}
         </div>
       </div>
     </>
