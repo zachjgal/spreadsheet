@@ -19,7 +19,7 @@ type CellDisplayValueProps = {
 
 const CellDisplayValue: React.FC<CellDisplayValueProps> = ({ value }) => {
   if (typeof value === "string") {
-    return <i>{value}</i>;
+    return <span>{value}</span>;
   } else if (typeof value === "boolean") {
     return <React.Fragment>{`${value}`}</React.Fragment>;
   } else {
@@ -33,6 +33,7 @@ export type SheetCellProps = {
   setX: (data: number) => void;
   setY: (data: number) => void;
   value: CellValue;
+  fontData: FontData;
   rowInd: number;
   colInd: number;
   onSelect: () => PayloadAction<Coords>;
@@ -50,6 +51,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
   value,
   rowInd,
   colInd,
+  fontData,
   onSelect,
   setMonitor,
   setX,
@@ -60,13 +62,6 @@ const SheetCell: React.FC<SheetCellProps> = ({
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
   const [cellValue, setCellValue] = useState("");
-
-  // for fonts
-  const [fontData, SetFontData] = useState<FontData>();
-  const [font, setFont] = useState("");
-  const [size, setSize] = useState(10);
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -97,6 +92,14 @@ const SheetCell: React.FC<SheetCellProps> = ({
   //   (state: RootState) => state.data.currentFormulaInput
   // );
 
+  const cellStyle = {
+    width: "100px",
+    fontWeight: fontData.bold == true ? 600 : 500,
+    fontStyle: fontData.italic == true ? "italic" : "",
+    fontFamily: `${fontData.font}`,
+    fontSize: `${fontData.size}px`,
+  };
+
   return isEditMode ? (
     <td>
       <input
@@ -123,9 +126,10 @@ const SheetCell: React.FC<SheetCellProps> = ({
         setX(rowInd);
         setY(colInd);
         setMonitor(cellValue);
+        console.log(fontData);
       }}
     >
-      <div style={{ width: "100px" }}>
+      <div style={cellStyle}>
         <CellDisplayValue value={hasError ? "ERROR" : value} />
       </div>
     </td>
