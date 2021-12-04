@@ -13,11 +13,6 @@ type FontData = {
   italic: boolean;
 };
 
-type FontInput = {
-  coords: Coords;
-  data: FontData;
-};
-
 type FontEdit = {
   coords: Coords;
   data: string;

@@ -10,7 +10,7 @@ import "./SheetCell.css";
 import { useDispatch, useSelector } from "react-redux";
 import { PayloadAction } from "@reduxjs/toolkit";
 //import { editCell, setCurrentFormulaInput } from "../redux/features/sheetState";
-import { editCell, getFontData } from "../redux/features/sheetState";
+import { editCell } from "../redux/features/sheetState";
 import { RootState } from "../redux/store";
 
 type CellDisplayValueProps = {
@@ -110,7 +110,6 @@ const SheetCell: React.FC<SheetCellProps> = ({
         onChange={(e) => {
           setCellValue(e.currentTarget.value);
           setMonitor(e.currentTarget.value);
-          dispatch(getFontData([rowInd, colInd]));
         }}
         onKeyDown={onDefocusInputHandler}
       />
