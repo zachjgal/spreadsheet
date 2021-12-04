@@ -48,10 +48,10 @@ const initialState: SpreadSheetState = {
   expressions: new Map<string, Expr>(),
   rawExpressions: new Map<string, string>(),
   sheetData: initSheetData(),
+  fontSheetData: initSheetFontData(),
   selectedExpression: [0, 0],
   errors: new Map<string, Error>(),
   currentFormulaInput: "",
-  fontSheetData: initSheetFontData(),
 };
 
 type EditActionPayload = string;
@@ -116,6 +116,10 @@ export const sheetState = createSlice({
           }
         }
         updateCellAndChildren(cell);
+        // todo reevaluate children to see if their errors can be removed as well.
+        //  e.g. A1 is circular reference, set B1 = A1, should get error. But then
+        //  if A1 is set to 1, the error on B1 should be removed automatically w/o
+        //  having to hit enter to reevaluate B1
         if (state.errors.has(state.selectedExpression.toString())) {
           state.errors.delete(state.selectedExpression.toString());
         }
