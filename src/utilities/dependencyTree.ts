@@ -34,14 +34,47 @@ export class DependencyTree {
       (this.graph.get(dependency.toString()) as Set<string>).add(
         node.toString()
       );
-      if (
-        (this.graph.get(node.toString()) as Set<string>).has(
-          dependency.toString()
-        )
-      ) {
+      if (this.hasCycle(node.toString(), dependency.toString())) {
         throw new CircularReferenceError(node, dependency);
       }
     }
+  }
+
+  /*
+   * In a directed acyclic graph, if there's a path from node A to node B,
+   * and a path from node B to node A, you have a cycle
+   */
+  private hasCycle(node1: string, node2: string): boolean {
+    return this.graphHasPath(node1, node2) && this.graphHasPath(node2, node1);
+  }
+
+  /*
+   * Perform BFS starting at node1 until either a path to node2 is found,
+   * in which case return true, or there are no more nodes to explore, in
+   * which case return false.
+   * */
+  private graphHasPath(from: string, to: string): boolean {
+    if (from === to) {
+      return true;
+    }
+    let visited: Set<string> = new Set<string>();
+    let queue: Array<string> = [];
+    queue.push(from);
+
+    while (queue.length > 0) {
+      const node = queue.shift() as string;
+      if (node === to) {
+        return true;
+      }
+      visited.add(node);
+      let adjacencies = this.graph.get(node) as Set<string>;
+      for (let adjacentNode of adjacencies.values()) {
+        if (!visited.has(adjacentNode)) {
+          queue.push(adjacentNode);
+        }
+      }
+    }
+    return false;
   }
 
   hasCell(node: Coords): boolean {

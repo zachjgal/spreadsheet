@@ -48,10 +48,10 @@ const initialState: SpreadSheetState = {
   expressions: new Map<string, Expr>(),
   rawExpressions: new Map<string, string>(),
   sheetData: initSheetData(),
+  fontSheetData: initSheetFontData(),
   selectedExpression: [0, 0],
   errors: new Map<string, Error>(),
   currentFormulaInput: "",
-  fontSheetData: initSheetFontData(),
 };
 
 type EditActionPayload = string;
@@ -116,6 +116,10 @@ export const sheetState = createSlice({
           }
         }
         updateCellAndChildren(cell);
+        // todo reevaluate children to see if their errors can be removed as well.
+        //  e.g. A1 is circular reference, set B1 = A1, should get error. But then
+        //  if A1 is set to 1, the error on B1 should be removed automatically w/o
+        //  having to hit enter to reevaluate B1
         if (state.errors.has(state.selectedExpression.toString())) {
           state.errors.delete(state.selectedExpression.toString());
         }
@@ -129,7 +133,6 @@ export const sheetState = createSlice({
     },
 
     getFontData: (state, action: PayloadAction<Coords>) => {
-      
       //To do, pass in the cell and get the font data associated with the cell
       let x = action.payload[0];
       let y = action.payload[1];
@@ -139,14 +142,14 @@ export const sheetState = createSlice({
         bold: state.fontSheetData[x][y].bold,
         italic: state.fontSheetData[x][y].italic,
       };
-      console.log(x)
-      console.log(y)
+      console.log(x);
+      console.log(y);
       console.log(fontData);
     },
 
     editFontData: (state, action: PayloadAction<FontInput>) => {
       //To do, pass in the cell and get the font data associated with the cell
-      console.log("I am here")
+      console.log("I am here");
       let x = action.payload.coords[0];
       let y = action.payload.coords[1];
       state.fontSheetData[x][y].font = action.payload.data.font;
@@ -163,5 +166,6 @@ export const sheetState = createSlice({
 
 const { actions, reducer } = sheetState;
 // Action creators are generated for each case reducer function
-export const { selectExpression, editCell, getFontData, editFontData } = actions;
+export const { selectExpression, editCell, getFontData, editFontData } =
+  actions;
 export default reducer;
