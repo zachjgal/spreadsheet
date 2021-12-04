@@ -1,13 +1,16 @@
 import React, { FunctionComponent, useState, useEffect } from "react";
 import FontPicker from "font-picker-react";
 import { useDispatch, useSelector } from "react-redux";
-import { editFontData,addRowBelow,addColumnLeft,addRowAbove,addColumnRight ,getFontData } from "../../redux/features/sheetState";
 import { RootState } from "../../redux/store";
 import {
   editFonts,
   editItalic,
   editSize,
   editBold,
+  addRowBelow,
+  addColumnLeft,
+  addRowAbove,
+  addColumnRight 
 } from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;

@@ -323,7 +323,6 @@ export const sheetState = createSlice({
       }
     },
 
-
     addColumnLeft:(state)=> {
       console.log("Add Column Left")
       const cell: Coords = state.selectedExpression;
@@ -462,8 +461,8 @@ export const {
   editSize,
   addRowBelow,
   addRowAbove,
-   addColumnRight,
-   addColumnLeft
+  addColumnRight,
+  addColumnLeft
 } = actions;
 export default reducer;
 
