@@ -7,7 +7,6 @@ import {
   editItalic,
   editSize,
   editBold,
-  getFontData,
 } from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;
@@ -265,10 +264,10 @@ export type FontSizeProps = {
 };
 
 const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
-  const [size, setSize] = useState(10);
-  const sizeArray = [
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-  ];
+  const [size, setSize] = useState(15);
+  const range = (min:number, max:number) => Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const sizeArray = range(10,30);
+
   return (
     <>
       <div

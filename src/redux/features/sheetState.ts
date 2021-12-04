@@ -32,8 +32,8 @@ const initSheetFontData = (initWidth = 58, initHeight = 58) => {
     newSheetData[i] = [];
     for (let j: number = 0; j < initWidth; j++) {
       let fontData: FontData = {
-        font: "string",
-        size: 10,
+        font: "Open Sans",
+        size: 15,
         bold: false,
         italic: false,
       };
