@@ -133,19 +133,18 @@ export const sheetState = createSlice({
       console.log("Add Row Below")
       //update the SheetData
       const cell: Coords = state.selectedExpression;
-      let newRow = new Array(state.sheetData.length).fill("")
+      let newRow:CellValue[] = new Array(state.sheetData.length).fill("")
       let fontData: FontData = {font: "Open Sans", size: 15, bold: false, italic: false,};
       let newFontRow = new Array(state.sheetData.length).fill(fontData)
       let x_pos = cell[0]
       state.sheetData.splice(x_pos+1, 0, newRow);
       state.fontSheetData.splice(x_pos+1,0, newFontRow);
       
-
       //get the list of outdated coords in the sheet
       let outdatedCoords:Coords[] = []
       state.rawExpressions.forEach((value: string, key: string) => {
-        const x = value.split(",").map(Number)[0]
-        const y= value.split(",").map(Number)[1]
+        const x = key.split(",").map(Number)[0]
+        const y= key.split(",").map(Number)[1]
         if (x > x_pos) {
           let c:Coords = [x,y]
           outdatedCoords.push(c)
@@ -155,12 +154,12 @@ export const sheetState = createSlice({
       //update the Maps
       for (let x =0; x< outdatedCoords.length;x++){
         let updatedCoord:Coords = [outdatedCoords[x][0]+1, outdatedCoords[x][1]]
-
+        
         //update the RawExpression Map
         let rawValue:string = state.rawExpressions.get(outdatedCoords[x].toString()) || ""
         state.rawExpressions.delete(outdatedCoords[x].toString())
         state.rawExpressions.set(updatedCoord.toString(),rawValue)
-
+        
         //update the expression Map
         let expValue:Expr = state.expressions.get(outdatedCoords[x].toString())!;
         state.expressions.delete(outdatedCoords[x].toString())
@@ -235,7 +234,6 @@ export const sheetState = createSlice({
         //update the dependency Tree
         let deps:Set<string> = state.dependencyTree.getGraph().get(outdatedCoords[x].toString())!;
         let temp:Set<Coords> = new Set<Coords>();
-        console.log(deps)
         if (deps!= undefined){
           var iterator = deps.values();
 
@@ -331,8 +329,8 @@ export const sheetState = createSlice({
       let y_pos = cell[1]
       
       for(let x =0; x< state.sheetData.length;x++){
-        state.sheetData[x].splice(y_pos, 0, "");
-        state.fontSheetData[x].splice(y_pos,0, fontData);
+        state.sheetData[x].splice(y_pos-1, 0, "");
+        state.fontSheetData[x].splice(y_pos-1,0, fontData);
       } 
       
       //get the list of outdated coords in the sheet
@@ -340,7 +338,7 @@ export const sheetState = createSlice({
       state.rawExpressions.forEach((value: string, key: string) => {
         const x = value.split(",").map(Number)[0]
         const y= value.split(",").map(Number)[1]
-        if (x >= y_pos) {
+        if (y >= y_pos) {
           let c:Coords = [x,y]
           outdatedCoords.push(c)
         }
@@ -386,6 +384,91 @@ export const sheetState = createSlice({
           state.dependencyTree.addDependencies(updatedCoord, temp)
         }
       }
+    },
+
+    deleteRow:(state)=> {
+      console.log("Delete Row")
+      const cell: Coords = state.selectedExpression;
+      let x_pos = cell[0]
+
+      //remove rawExpressions for deleted row, also delete dependencies in the same row
+      state.rawExpressions.forEach((value: string, key: string) => {
+        console.log(key, value);
+        const x = key.split(",").map(Number)[0]
+        const y = key.split(",").map(Number)[1]
+        if(x == x_pos){
+          state.rawExpressions.delete(key)
+        }
+        let coord:Coords = [x,y]
+        state.dependencyTree.remove(coord)
+      });
+
+      state.expressions.forEach((value: Expr, key: string) => {
+        console.log(key, value);
+        const x = key.split(",").map(Number)[0]
+        if(x == x_pos){
+          state.rawExpressions.delete(key)
+        }
+      });
+
+        //update the dependency Tree
+        let graph = state.dependencyTree.getGraph()
+        graph.forEach((value:Set<string>,key:string) => {
+          value.forEach((coord:string)=>{
+            const x = coord.split(",").map(Number)[0]
+            if(x == x_pos){
+              value.delete(coord)
+            }
+          });
+          
+        });
+      state.sheetData.splice(x_pos, 1);
+      state.fontSheetData.splice(x_pos,1);
+
+    },
+
+    deleteColumn:(state)=> {
+      console.log("Delete Column")
+      const cell: Coords = state.selectedExpression;
+      let y_pos = cell[1]
+
+      //remove rawExpressions for deleted row, also delete dependencies in the same row
+      state.rawExpressions.forEach((value: string, key: string) => {
+        console.log(key, value);
+        const x = key.split(",").map(Number)[0]
+        const y = key.split(",").map(Number)[1]
+        if(y == y_pos){
+          state.rawExpressions.delete(key)
+        }
+        let coord:Coords = [x,y]
+        state.dependencyTree.remove(coord)
+      });
+
+      state.expressions.forEach((value: Expr, key: string) => {
+        console.log(key, value);
+        const y = key.split(",").map(Number)[1]
+        if(y == y_pos){
+          state.rawExpressions.delete(key)
+        }
+      });
+
+      //update the dependency Tree
+      let graph = state.dependencyTree.getGraph()
+      graph.forEach((value:Set<string>,key:string) => {
+        value.forEach((coord:string)=>{
+          const y = coord.split(",").map(Number)[1]
+          if(y == y_pos){
+            value.delete(coord)
+          }
+        });
+        
+      });
+      for(let x =0; x< state.sheetData.length;x++){
+        state.sheetData[x].splice(y_pos, 1);
+        state.fontSheetData[x].splice(y_pos,1);
+      }
+
+
     },
 
     selectExpression: (state, action: PayloadAction<Coords>) => {
@@ -462,7 +545,9 @@ export const {
   addRowBelow,
   addRowAbove,
   addColumnRight,
-  addColumnLeft
+  addColumnLeft,
+  deleteRow,
+  deleteColumn
 } = actions;
 export default reducer;
 

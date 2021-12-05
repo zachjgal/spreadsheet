@@ -10,7 +10,9 @@ import {
   addRowBelow,
   addColumnLeft,
   addRowAbove,
-  addColumnRight 
+  addColumnRight,
+  deleteRow,
+  deleteColumn
 } from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;
@@ -217,6 +219,7 @@ export type DeleteProps = {
 };
 
 const DeleteDropDown: FunctionComponent<DeleteProps> = (props) => {
+  const dispatch = useDispatch();
   return (
     <>
       <div
@@ -244,17 +247,11 @@ const DeleteDropDown: FunctionComponent<DeleteProps> = (props) => {
           className={`dropdown-menu ${props.nav === "delete" && "show"}`}
           aria-labelledby="dropdownMenuLink"
         >
-          <a className="dropdown-item" href="#">
-            Row Above
+          <a className="dropdown-item" href="#" onClick= { ()=>{dispatch(deleteRow())}}>
+            Row 
           </a>
-          <a className="dropdown-item" href="#">
-            Row Below
-          </a>
-          <a className="dropdown-item" href="#">
-            Column Left
-          </a>
-          <a className="dropdown-item" href="#">
-            Column Right
+          <a className="dropdown-item" href="#" onClick= { ()=>{dispatch(deleteColumn())}}>
+            Column 
           </a>
         </div>
       </div>
