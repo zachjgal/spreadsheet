@@ -62,7 +62,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
 }) => {
   const dispatch = useDispatch();
   const [isEditMode, setIsEditMode] = useState(false);
-  // const [cellValue, setCellValue] = useState("");
+  const [cellValue, setCellValue] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -93,9 +93,17 @@ const SheetCell: React.FC<SheetCellProps> = ({
 
   const onDefocusInputHandler = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
-      setIsEditMode(false);
-      changeInputToLabel();
-      setMonitor("");
+      if (cellValue !== "") {
+        setIsEditMode(false);
+        changeInputToLabel();
+        dispatch(editCell(cellValue));
+        setMonitor("");
+        setCellValue("");
+      } else {
+        setIsEditMode(false);
+        changeInputToLabel();
+        setMonitor("");
+      }
     }
   };
 
@@ -108,18 +116,22 @@ const SheetCell: React.FC<SheetCellProps> = ({
     color: fontData.color,
   };
 
-
   return isEditMode ? (
     <td id={`${rowInd},${colInd}`}>
       <input
         id={`${rowInd},${colInd}`}
         className="cell-block border-0"
         style={{ width: "100px" }}
-        value={value as string}
+        value={cellValue == "" ? (value as string) : cellValue}
         ref={inputRef}
         onChange={(e) => {
-          setMonitor(e.currentTarget.value);
-          dispatch(editCell(e.currentTarget.value));
+          if (e.currentTarget.value.charAt(0) !== "=") {
+            setMonitor(e.currentTarget.value);
+            dispatch(editCell(e.currentTarget.value));
+          } else {
+            setMonitor(e.currentTarget.value);
+            setCellValue(e.currentTarget.value);
+          }
         }}
         onKeyDown={onDefocusInputHandler}
       />
@@ -136,7 +148,6 @@ const SheetCell: React.FC<SheetCellProps> = ({
         changeLabeltoInput();
         setX(rowInd);
         setY(colInd);
-        console.log(value as string)
       }}
     >
       <div id={`${rowInd},${colInd}`} style={cellStyle} className="cell-data">
