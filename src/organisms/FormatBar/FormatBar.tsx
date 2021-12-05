@@ -1,9 +1,18 @@
 import React, { ChangeEvent, FunctionComponent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { editFormatData } from "../../redux/features/sheetState";
+import {
+  editFormatData,
+  addRowAbove,
+  addColumnLeft,
+  addColumnRight,
+  addRowBelow,
+  deleteColumn,
+  deleteRow,
+} from "../../redux/features/sheetState";
 import FontPicker from "font-picker-react";
 import { FormatOption } from "../../types";
+import { Dropdown } from "react-bootstrap";
 import "./FormatBar.css";
 
 const fontsAPIKey = "AIzaSyAMo73RrEPCwV-zygT3ibodMsxelIm26Lw";
@@ -18,6 +27,72 @@ type EditFormatProps = {
     formatKey: FormatOption,
     payload?: boolean | number | string
   ) => void;
+};
+
+type EditRowAndColumnProps = {};
+
+const EditAdd: React.FC<EditRowAndColumnProps> = () => {
+  const dispatch = useDispatch();
+  const addDropDown = [
+    {
+      key: "Row Above",
+      function: () => dispatch(addRowAbove()),
+    },
+    {
+      key: "Row Below",
+      function: () => dispatch(addRowBelow()),
+    },
+    {
+      key: "Column Right",
+      function: () => dispatch(addColumnRight()),
+    },
+    {
+      key: "Column Left",
+      function: () => dispatch(addColumnLeft()),
+    },
+  ];
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+        Insert
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {addDropDown.map((elem) => {
+          return (
+            <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
+          );
+        })}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};
+
+const EditDelete: React.FC<EditRowAndColumnProps> = () => {
+  const dispatch = useDispatch();
+  const deleteDropDown = [
+    {
+      key: "Delete Row",
+      function: () => dispatch(deleteRow()),
+    },
+    {
+      key: "Delete Column",
+      function: () => dispatch(deleteColumn()),
+    },
+  ];
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+        Delete
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {deleteDropDown.map((elem) => {
+          return (
+            <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
+          );
+        })}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
 };
 
 const EditFont: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
@@ -53,7 +128,7 @@ const EditFontItalics: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   const italic = useSelector(selectFormatInfo(FormatOption.ITALIC)) as boolean;
   return (
     <button
-      className="format-option"
+      className="format-option fst-italic"
       onClick={() => {
         changeFormatInfo(FormatOption.ITALIC, !italic);
       }}
@@ -67,7 +142,7 @@ const EditFontBold: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   const bold = useSelector(selectFormatInfo(FormatOption.BOLD)) as boolean;
   return (
     <button
-      className="format-option"
+      className="format-option fw-bold"
       onClick={() => {
         console.log("Test", !bold);
         changeFormatInfo(FormatOption.BOLD, !bold);
@@ -108,6 +183,8 @@ const FormatBar: FunctionComponent = () => {
   };
 
   const editNavigation = [
+    { key: "add", component: EditAdd },
+    { key: "delete", component: EditDelete },
     {
       key: "font",
       component: EditFont,
@@ -140,110 +217,5 @@ const FormatBar: FunctionComponent = () => {
     </div>
   );
 };
-
-// export type InsertProps = {
-//   nav: string;
-//   setNav: (arg: string) => void;
-// };
-//
-// const InsertDropDown: FunctionComponent<InsertProps> = (props) => {
-//   return (
-//     <>
-//       <div
-//         className="dropdown show"
-//         onClick={() => {
-//           if (props.nav === "insert") {
-//             props.setNav("");
-//           } else {
-//             props.setNav("insert");
-//           }
-//         }}
-//       >
-//         <a
-//           className="btn btn-secondary dropdown-toggle"
-//           href="#"
-//           role="button"
-//           id="dropdownMenuLink"
-//           data-toggle="dropdown"
-//           aria-haspopup="true"
-//           aria-expanded="false"
-//         >
-//           Insert
-//         </a>
-//         <div
-//           className={`dropdown-menu ${props.nav === "insert" && "show"}`}
-//           aria-labelledby="dropdownMenuLink"
-//         >
-//           <a className="dropdown-item" href="#">
-//             Row Above
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Row Below
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Column Left
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Column Right
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Function
-//           </a>
-//         </div>
-//       </div>
-//     </>
-//   );
-// };
-//
-// export type DeleteProps = {
-//   nav: string;
-//   setNav: (arg: string) => void;
-// };
-//
-// const DeleteDropDown: FunctionComponent<DeleteProps> = (props) => {
-//   return (
-//     <>
-//       <div
-//         className="dropdown show"
-//         onClick={() => {
-//           if (props.nav === "delete") {
-//             props.setNav("");
-//           } else {
-//             props.setNav("delete");
-//           }
-//         }}
-//       >
-//         <a
-//           className="btn btn-secondary dropdown-toggle"
-//           href="#"
-//           role="button"
-//           id="dropdownMenuLink"
-//           data-toggle="dropdown"
-//           aria-haspopup="true"
-//           aria-expanded="false"
-//         >
-//           Delete
-//         </a>
-//         <div
-//           className={`dropdown-menu ${props.nav === "delete" && "show"}`}
-//           aria-labelledby="dropdownMenuLink"
-//         >
-//           <a className="dropdown-item" href="#">
-//             Row Above
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Row Below
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Column Left
-//           </a>
-//           <a className="dropdown-item" href="#">
-//             Column Right
-//           </a>
-//         </div>
-//       </div>
-//     </>
-//   );
-// };
 
 export default FormatBar;
