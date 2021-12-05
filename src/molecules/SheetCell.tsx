@@ -108,6 +108,7 @@ const SheetCell: React.FC<SheetCellProps> = ({
     color: fontData.color,
   };
 
+
   return isEditMode ? (
     <td id={`${rowInd},${colInd}`}>
       <input

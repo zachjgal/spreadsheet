@@ -29,6 +29,21 @@ type TypeEdit = {
   data: boolean;
 };
 
+type FontEdit = {
+  coords: Coords;
+  data: string;
+};
+
+type SizeEdit = {
+  coords: Coords;
+  data: number;
+};
+
+type TypeEdit = {
+  coords: Coords;
+  data: boolean;
+};
+
 interface Expr {
   execute(sheet: SheetData): CellValue;
 }

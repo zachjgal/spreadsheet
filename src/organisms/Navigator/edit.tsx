@@ -163,6 +163,7 @@ export type FontsProps = {
 };
 
 const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
+  const [font, setFont] = useState("Open Sans");
   return (
     <>
       <div
@@ -176,7 +177,7 @@ const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
       >
         <FontPicker
           apiKey="AIzaSyAMo73RrEPCwV-zygT3ibodMsxelIm26Lw"
-          activeFontFamily={props.font}
+          activeFontFamily={font}
           limit={1000}
           variants={["regular", "italic", "600", "700", "700italic"]}
           onChange={(nextFont) => {
