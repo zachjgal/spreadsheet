@@ -362,7 +362,7 @@ export class Tokenizer {
 export class Compiler {
   parseAsLangConstant(obj: string, _: Set<Coords>): Expr {
     if (!obj.startsWith("#")) {
-      throw new Error(
+      throw new ParserError(
         "Language constants like booleans should start with a '#'"
       );
     }
@@ -372,7 +372,9 @@ export class Compiler {
     } else if (constStr === "f" || constStr === "false") {
       return new PrimitiveExpr(false);
     } else {
-      throw new ParserError(`Unrecognized constant: ${obj.substr(1)}`);
+      throw new InvalidExpressionError(
+        `Unrecognized constant: ${obj.substr(1)}`
+      );
     }
   }
 

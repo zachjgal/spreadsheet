@@ -1,0 +1,8 @@
+.format-bar {
+    display: flex;
+    flex-direction: row;
+}
+
+.format-option {
+    width: 42px;
+}

@@ -15,11 +15,11 @@ const ErrorBar: React.FC<ErrorBarProps> = () => {
       : `${(err as Error).name}: ${(err as Error).message}`;
   });
 
-  return (
+  return !error ? (
+    <div className="error-container-empty" />
+  ) : (
     <div className="error-container">
-     
-        {error}
-     
+      <div className="error-bar">{error}</div>
     </div>
   );
 };

@@ -4,33 +4,13 @@ type CellValue = string | number | boolean;
 
 type SheetData = CellValue[][];
 
-type FontSheetData = FontData[][];
+type FormatSheetData = FormatData[][];
 
-type FontData = {
+type FormatData = {
   font: string;
   size: number;
   bold: boolean;
   italic: boolean;
-};
-
-type FontInput = {
-  coords: Coords;
-  data: FontData;
-};
-
-type FontEdit = {
-  coords: Coords;
-  data: string;
-};
-
-type SizeEdit = {
-  coords: Coords;
-  data: number;
-};
-
-type TypeEdit = {
-  coords: Coords;
-  data: boolean;
 };
 
 interface Expr {
