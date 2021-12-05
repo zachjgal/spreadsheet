@@ -128,6 +128,266 @@ export const sheetState = createSlice({
       }
     },
 
+
+    addRowBelow: (state) => {
+      console.log("Add Row Below")
+      //update the SheetData
+      const cell: Coords = state.selectedExpression;
+      let newRow = new Array(state.sheetData.length).fill("")
+      let fontData: FontData = {font: "Open Sans", size: 15, bold: false, italic: false,};
+      let newFontRow = new Array(state.sheetData.length).fill(fontData)
+      let x_pos = cell[0]
+      state.sheetData.splice(x_pos+1, 0, newRow);
+      state.fontSheetData.splice(x_pos+1,0, newFontRow);
+      
+
+      //get the list of outdated coords in the sheet
+      let outdatedCoords:Coords[] = []
+      state.rawExpressions.forEach((value: string, key: string) => {
+        const x = value.split(",").map(Number)[0]
+        const y= value.split(",").map(Number)[1]
+        if (x > x_pos) {
+          let c:Coords = [x,y]
+          outdatedCoords.push(c)
+        }
+      });
+      
+      //update the Maps
+      for (let x =0; x< outdatedCoords.length;x++){
+        let updatedCoord:Coords = [outdatedCoords[x][0]+1, outdatedCoords[x][1]]
+
+        //update the RawExpression Map
+        let rawValue:string = state.rawExpressions.get(outdatedCoords[x].toString()) || ""
+        state.rawExpressions.delete(outdatedCoords[x].toString())
+        state.rawExpressions.set(updatedCoord.toString(),rawValue)
+
+        //update the expression Map
+        let expValue:Expr = state.expressions.get(outdatedCoords[x].toString())!;
+        state.expressions.delete(outdatedCoords[x].toString())
+        state.expressions.set(updatedCoord.toString(),expValue)
+      
+        //update the dependency Tree
+        let deps:Set<string> = state.dependencyTree.getGraph().get(outdatedCoords[x].toString())!;
+        let temp:Set<Coords> = new Set<Coords>();
+        console.log(deps)
+        if (deps!= undefined){
+          var iterator = deps.values();
+
+          for(let i = 0; i<deps.size; i++ ){
+            let coord = iterator.next().value
+            const x = coord.split(",").map(Number)[0]
+            const y= coord.split(",").map(Number)[1]
+            if (x> cell[0]) {
+              const c:Coords = [x+1,y]
+              temp.add(c)
+            }
+            else{
+              const c:Coords = [x,y]
+              temp.add(c)
+            }
+          }
+          state.dependencyTree.remove(outdatedCoords[x])
+          state.dependencyTree.addDependencies(updatedCoord, temp)
+        }
+      }
+
+
+
+    },
+
+    addRowAbove: (state) => {
+      console.log("Add Row Above")
+      const cell: Coords = state.selectedExpression;
+
+      //update the SheetData
+      let newRow = new Array(state.sheetData.length).fill("")
+      let fontData: FontData = {font: "Open Sans", size: 15, bold: false, italic: false,};
+      let newFontRow = new Array(state.sheetData.length).fill(fontData)
+      let x_pos = cell[0]
+      state.sheetData.splice(x_pos, 0, newRow);
+      state.fontSheetData.splice(x_pos,0, newFontRow);
+
+      //get the list of outdated coords in the sheet
+      let outdatedCoords:Coords[] = []
+      state.rawExpressions.forEach((value: string, key: string) => {
+        const x = value.split(",").map(Number)[0]
+        const y= value.split(",").map(Number)[1]
+        if (x > x_pos-1) {
+          let c:Coords = [x,y]
+          outdatedCoords.push(c)
+        }
+      });
+      
+      //update the Maps
+      for (let x =0; x< outdatedCoords.length;x++){
+        const updatedCoord:Coords = [outdatedCoords[x][0]+1, outdatedCoords[x][1]]
+
+        //update the RawExpression Map
+        let rawValue:string = state.rawExpressions.get(outdatedCoords[x].toString()) || ""
+        state.rawExpressions.delete(outdatedCoords[x].toString())
+        state.rawExpressions.set(updatedCoord.toString(),rawValue)
+
+        //update the expression Map
+        let expValue:Expr = state.expressions.get(outdatedCoords[x].toString())!;
+        state.expressions.delete(outdatedCoords[x].toString())
+        state.expressions.set(updatedCoord.toString(),expValue)
+      
+        //update the dependency Tree
+        let deps:Set<string> = state.dependencyTree.getGraph().get(outdatedCoords[x].toString())!;
+        let temp:Set<Coords> = new Set<Coords>();
+        console.log(deps)
+        if (deps!= undefined){
+          var iterator = deps.values();
+
+          for(let i = 0; i<deps.size; i++ ){
+            let coord = iterator.next().value
+            const x = coord.split(",").map(Number)[0]
+            const y= coord.split(",").map(Number)[1]
+            if (x> cell[0]-1) {
+              const c:Coords = [x+1,y]
+              temp.add(c)
+            }
+            else{
+              const c:Coords = [x,y]
+              temp.add(c)
+            }
+          }
+          state.dependencyTree.remove(outdatedCoords[x])
+          state.dependencyTree.addDependencies(updatedCoord, temp)
+        }
+      }
+
+    },
+
+    addColumnRight: (state) => {
+      console.log("Add Column Left")
+      const cell: Coords = state.selectedExpression;
+      let fontData: FontData = {font: "Open Sans", size: 15, bold: false, italic: false,};
+      //Create new SheetData with extra column
+      let y_pos = cell[1]
+      for(let x =0; x< state.sheetData.length;x++){
+        state.sheetData[x].splice(y_pos+1, 0, "");
+        state.fontSheetData[x].splice(y_pos+1,0,fontData)
+      } 
+
+
+      //get the list of outdated coords in the sheet
+      let outdatedCoords:Coords[] = []
+      state.rawExpressions.forEach((value: string, key: string) => {
+        const x = value.split(",").map(Number)[0]
+        const y= value.split(",").map(Number)[1]
+        if (y > y_pos) {
+          let c:Coords = [x,y]
+          outdatedCoords.push(c)
+        }
+      });
+
+
+      //update the Maps
+      for (let x =0; x< outdatedCoords.length;x++){
+        const updatedCoord:Coords = [outdatedCoords[x][0], outdatedCoords[x][1]+1]
+
+        //update the RawExpression Map
+        let rawValue:string = state.rawExpressions.get(outdatedCoords[x].toString()) || ""
+        state.rawExpressions.delete(outdatedCoords[x].toString())
+        state.rawExpressions.set(updatedCoord.toString(),rawValue)
+
+        //update the expression Map
+        let expValue:Expr = state.expressions.get(outdatedCoords[x].toString())!;
+        state.expressions.delete(outdatedCoords[x].toString())
+        state.expressions.set(updatedCoord.toString(),expValue)
+      
+        //update the dependency Tree
+        let deps:Set<string> = state.dependencyTree.getGraph().get(outdatedCoords[x].toString())!;
+        let temp:Set<Coords> = new Set<Coords>();
+        console.log(deps)
+        if (deps!= undefined){
+          var iterator = deps.values();
+
+          for(let i = 0; i<deps.size; i++ ){
+            let coord = iterator.next().value
+            const x = coord.split(",").map(Number)[0]
+            const y= coord.split(",").map(Number)[1]
+            if (y> cell[1]) {
+              const c:Coords = [x,y+1]
+              temp.add(c)
+            }
+            else{
+              const c:Coords = [x,y]
+              temp.add(c)
+            }
+          }
+          state.dependencyTree.remove(outdatedCoords[x])
+          state.dependencyTree.addDependencies(updatedCoord, temp)
+        }
+      }
+    },
+
+    addColumnLeft:(state)=> {
+      console.log("Add Column Left")
+      const cell: Coords = state.selectedExpression;
+      let fontData: FontData = {font: "Open Sans", size: 15, bold: false, italic: false,};
+      //Create new SheetData and fontSheetData with extra column
+      let y_pos = cell[1]
+      
+      for(let x =0; x< state.sheetData.length;x++){
+        state.sheetData[x].splice(y_pos, 0, "");
+        state.fontSheetData[x].splice(y_pos,0, fontData);
+      } 
+      
+      //get the list of outdated coords in the sheet
+      let outdatedCoords:Coords[] = []
+      state.rawExpressions.forEach((value: string, key: string) => {
+        const x = value.split(",").map(Number)[0]
+        const y= value.split(",").map(Number)[1]
+        if (x >= y_pos) {
+          let c:Coords = [x,y]
+          outdatedCoords.push(c)
+        }
+      });
+
+
+
+      //update the Maps
+      for (let x =0; x< outdatedCoords.length;x++){
+        const updatedCoord:Coords = [outdatedCoords[x][0], outdatedCoords[x][1]+1]
+
+        //update the RawExpression Map
+        let rawValue:string = state.rawExpressions.get(outdatedCoords[x].toString()) || ""
+        state.rawExpressions.delete(outdatedCoords[x].toString())
+        state.rawExpressions.set(updatedCoord.toString(),rawValue)
+
+        //update the expression Map
+        let expValue:Expr = state.expressions.get(outdatedCoords[x].toString())!;
+        state.expressions.delete(outdatedCoords[x].toString())
+        state.expressions.set(updatedCoord.toString(),expValue)
+      
+        //update the dependency Tree
+        let deps:Set<string> = state.dependencyTree.getGraph().get(outdatedCoords[x].toString())!;
+        let temp:Set<Coords> = new Set<Coords>();
+        console.log(deps)
+        if (deps!= undefined){
+          var iterator = deps.values();
+
+          for(let i = 0; i<deps.size; i++ ){
+            let coord = iterator.next().value
+            const x = coord.split(",").map(Number)[0]
+            const y= coord.split(",").map(Number)[1]
+            if (y>= cell[1]) {
+              const c:Coords = [x,y+1]
+              temp.add(c)
+            }
+            else{
+              const c:Coords = [x,y]
+              temp.add(c)
+            }
+          }
+          state.dependencyTree.remove(outdatedCoords[x])
+          state.dependencyTree.addDependencies(updatedCoord, temp)
+        }
+      }
+    },
+
     selectExpression: (state, action: PayloadAction<Coords>) => {
       state.selectedExpression = action.payload;
     },
@@ -199,5 +459,12 @@ export const {
   editBold,
   editItalic,
   editSize,
+  addRowBelow,
+  addRowAbove,
+  addColumnRight,
+  addColumnLeft
 } = actions;
 export default reducer;
+
+
+
