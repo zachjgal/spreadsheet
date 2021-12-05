@@ -13,8 +13,8 @@ export type SpreadSheetState = {
   formatSheetData: FormatSheetData;
 };
 
-const DEFAULT_WIDTH = 58;
-const DEFAULT_HEIGHT = 58;
+const DEFAULT_WIDTH = 59;
+const DEFAULT_HEIGHT = 59;
 
 const initSheetData = (
   initWidth = DEFAULT_WIDTH,

@@ -33,7 +33,7 @@ const Sheet: React.FC<SheetProps> = () => {
               colInd !== -1 ? (
                 <SheetCell coords={[rowInd, colInd]} />
               ) : (
-                <td style={{ minWidth: "24px" }}>{rowInd + 1}</td>
+                <td style={{ minWidth: "24px", textAlign:"center" }}>{rowInd + 1}</td>
               )
             )}
           </tr>
