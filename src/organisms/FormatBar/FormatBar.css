@@ -1,8 +1,24 @@
 .format-bar {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 
 .format-option {
-    width: 42px;
+  width: 42px;
+}
+
+.format-color {
+  height: 45px;
+}
+
+.btn  {
+  height: 45px;
+  border-radius: 0px;
+  border-right: 1px solid white;
+}
+
+.title {
+  font-size: 30px;
+  padding-left: 10px;
+  padding-right: 20px;
 }

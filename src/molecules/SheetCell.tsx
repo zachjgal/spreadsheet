@@ -39,6 +39,7 @@ const SheetCell: React.FC<SheetCellProps> = ({ coords }) => {
   return (
     <td
       className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
+      id={hasError(coords) ? "error-cell" : ""}
       onClick={() => dispatch(selectExpression(coords))}
     >
       <span
@@ -48,6 +49,7 @@ const SheetCell: React.FC<SheetCellProps> = ({ coords }) => {
             fontStyle: formatData.italic ? "italic" : "",
             fontFamily: formatData.font,
             fontSize: `${formatData.size}px`,
+            color: formatData.color,
           } as React.CSSProperties
         }
       >

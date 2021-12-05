@@ -3,4 +3,5 @@ export enum FormatOption {
     SIZE = "size",
     BOLD = "bold",
     ITALIC = "italic",
+    COLOR = "color",
 }
