@@ -1,8 +1,12 @@
 .format-bar {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 
 .format-option {
-    width: 42px;
+  width: 42px;
+}
+
+.format-color {
+  height: 38px;
 }

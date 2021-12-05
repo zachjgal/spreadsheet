@@ -11,6 +11,7 @@ type FormatData = {
   size: number;
   bold: boolean;
   italic: boolean;
+  color: string;
 };
 
 interface Expr {

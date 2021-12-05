@@ -35,6 +35,7 @@ const defaultFormatData: FormatData = {
   size: 15,
   bold: false,
   italic: false,
+  color: "#000000",
 };
 
 const initSheetFormatData = (

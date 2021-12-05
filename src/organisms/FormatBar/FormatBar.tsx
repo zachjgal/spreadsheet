@@ -35,6 +35,20 @@ const EditFont: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   );
 };
 
+const EditFontColor: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
+  const color = useSelector(selectFormatInfo(FormatOption.COLOR)) as string;
+  return (
+    <input
+      type="color"
+      value={color}
+      className="format-color"
+      onChange={(e) => {
+        changeFormatInfo(FormatOption.COLOR, e.target.value);
+      }}
+    />
+  );
+};
+
 const EditFontItalics: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   const italic = useSelector(selectFormatInfo(FormatOption.ITALIC)) as boolean;
   return (
@@ -109,6 +123,10 @@ const FormatBar: FunctionComponent = () => {
     {
       key: "italic",
       component: EditFontItalics,
+    },
+    {
+      key: "color",
+      component: EditFontColor,
     },
   ];
 
