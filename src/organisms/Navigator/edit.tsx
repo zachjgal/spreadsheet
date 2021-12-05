@@ -7,6 +7,7 @@ import {
   editItalic,
   editSize,
   editBold,
+  editColor,
 } from "../../redux/features/sheetState";
 export type EditProps = {
   x: number;
@@ -55,6 +56,12 @@ const Edit: FunctionComponent<EditProps> = (props) => {
         data: payload as number,
       };
       dispatch(editSize(changeSize));
+    } else if (arg == "color") {
+      const changeColor: FontEdit = {
+        coords: [props.x, props.y],
+        data: payload as string,
+      };
+      dispatch(editColor(changeColor));
     } else {
       const changeFont: FontEdit = {
         coords: [props.x, props.y],
@@ -77,7 +84,10 @@ const Edit: FunctionComponent<EditProps> = (props) => {
       key: "font",
       data: (
         <FontsDropDown
+          nav={nav}
+          setNav={setNav}
           changeFontInfo={changeFontInfo}
+          font={fontInfo.font}
         />
       ),
     },
@@ -88,6 +98,7 @@ const Edit: FunctionComponent<EditProps> = (props) => {
           nav={nav}
           setNav={setNav}
           changeFontInfo={changeFontInfo}
+          fontSize={fontInfo.size}
         />
       ),
     },
@@ -117,6 +128,22 @@ const Edit: FunctionComponent<EditProps> = (props) => {
         </div>
       ),
     },
+    {
+      key: "color",
+      data: (
+        <>
+          <input
+            type="color"
+            id="favcolor"
+            name="favcolor"
+            value={fontInfo.color}
+            onChange={(e) => {
+              changeFontInfo("color", e.currentTarget.value);
+            }}
+          />
+        </>
+      ),
+    },
   ];
 
   return (
@@ -129,21 +156,30 @@ const Edit: FunctionComponent<EditProps> = (props) => {
 };
 
 export type FontsProps = {
+  nav: string;
+  setNav: (arg: string) => void;
   changeFontInfo: (arg: string, payload?: any) => void;
+  font: string;
 };
 
 const FontsDropDown: FunctionComponent<FontsProps> = (props) => {
-  const [font, setFont] = useState("Open Sans");
   return (
     <>
-      <div>
+      <div
+        onClick={() => {
+          if (props.nav === "font") {
+            props.setNav("");
+          } else {
+            props.setNav("font");
+          }
+        }}
+      >
         <FontPicker
           apiKey="AIzaSyAMo73RrEPCwV-zygT3ibodMsxelIm26Lw"
-          activeFontFamily={font}
+          activeFontFamily={props.font}
           limit={1000}
           variants={["regular", "italic", "600", "700", "700italic"]}
           onChange={(nextFont) => {
-            setFont(nextFont.family);
             props.changeFontInfo("font", nextFont.family);
           }}
         />
@@ -261,12 +297,13 @@ export type FontSizeProps = {
   nav: string;
   setNav: (arg: string) => void;
   changeFontInfo: (arg: string, payload?: any) => void;
+  fontSize: number;
 };
 
 const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
-  const [size, setSize] = useState(15);
-  const range = (min:number, max:number) => Array.from({ length: max - min + 1 }, (_, i) => min + i);
-  const sizeArray = range(10,30);
+  const range = (min: number, max: number) =>
+    Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const sizeArray = range(10, 30);
 
   return (
     <>
@@ -289,7 +326,7 @@ const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
           aria-haspopup="true"
           aria-expanded="false"
         >
-          {size}
+          {props.fontSize}
         </a>
         <div
           className={`dropdown-menu ${props.nav === "fontsize" && "show"}`}
@@ -301,7 +338,6 @@ const FontSizeDropDown: FunctionComponent<FontSizeProps> = (props) => {
                 className="dropdown-item"
                 href="#"
                 onClick={() => {
-                  setSize(elem);
                   props.changeFontInfo("size", elem);
                 }}
               >

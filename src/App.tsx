@@ -12,8 +12,6 @@ function App() {
   const [y, setY] = useState(0);
   return (
     <div className="main-container">
-      {console.log(x)}
-      {console.log(y)}
       <Navigator navigator={navigator} setNavigator={setNavigator} x={x} y={y}/>
       <FormulaBar />
       <div className="sheet-monitor">{monitor}</div>

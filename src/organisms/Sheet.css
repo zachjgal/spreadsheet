@@ -5,3 +5,6 @@
 .spreadsheet-container {
   overflow-x: scroll;
 }
+.cell-data {
+  overflow: hidden;
+}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import lodashRange from "lodash/range";
 import "./Sheet.css";
 import SheetCell from "../molecules/SheetCell";
@@ -24,6 +24,7 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor, setX, setY }) => {
     (state: RootState) => state.data.selectedExpression
   );
   const [height, width] = [data.length, data[0].length];
+
   const hasError: boolean[][] = useSelector((state: RootState) => {
     let ret: boolean[][] = [];
     for (let i: number = 0; i < height; i++) {
@@ -66,7 +67,9 @@ const Sheet: React.FC<SheetProps> = ({ setMonitor, setX, setY }) => {
                   hasError={hasError[rowInd][colInd]}
                 />
               ) : (
-                <td style={{ minWidth: "24px" }}>{rowInd + 1}</td>
+                <td style={{ minWidth: "38px", textAlign: "center" }}>
+                  {rowInd + 1}
+                </td>
               )
             )}
           </tr>

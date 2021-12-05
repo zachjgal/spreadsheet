@@ -11,6 +11,7 @@ type FontData = {
   size: number;
   bold: boolean;
   italic: boolean;
+  color: string;
 };
 
 type FontEdit = {

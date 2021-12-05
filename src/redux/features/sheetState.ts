@@ -14,8 +14,11 @@ export type SpreadSheetState = {
   fontSheetData: FontSheetData;
 };
 
+let row = 14;
+let column = 30;
+
 // todo use Array type, not array` literal
-const initSheetData = (initWidth = 58, initHeight = 58) => {
+const initSheetData = (initWidth = row, initHeight = column) => {
   let newSheetData: SheetData = [];
   for (let i: number = 0; i < initHeight; i++) {
     newSheetData[i] = [];
@@ -26,7 +29,7 @@ const initSheetData = (initWidth = 58, initHeight = 58) => {
   return newSheetData;
 };
 
-const initSheetFontData = (initWidth = 58, initHeight = 58) => {
+const initSheetFontData = (initWidth = row, initHeight = column) => {
   let newSheetData: FontSheetData = [];
   for (let i: number = 0; i < initHeight; i++) {
     newSheetData[i] = [];
@@ -36,6 +39,7 @@ const initSheetFontData = (initWidth = 58, initHeight = 58) => {
         size: 15,
         bold: false,
         italic: false,
+        color: "#000000",
       };
       newSheetData[i][j] = fontData;
     }
@@ -139,6 +143,13 @@ export const sheetState = createSlice({
       state.fontSheetData[x][y].font = action.payload.data;
     },
 
+    editColor: (state, action: PayloadAction<FontEdit>) => {
+      console.log("Here to edit font");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].color = action.payload.data;
+    },
+
     editSize: (state, action: PayloadAction<SizeEdit>) => {
       console.log("Here to edit font");
       let x = action.payload.coords[0];
@@ -171,5 +182,6 @@ export const {
   editBold,
   editItalic,
   editSize,
+  editColor
 } = actions;
 export default reducer;
