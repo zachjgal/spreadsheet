@@ -146,7 +146,6 @@ class LanguageOperation implements Expr {
   }
 
   serialize(): string {
-    // todo david there's literally an error here dude
     const serializedArgs = CellRange.isExplodedCellRange(this.args)
       ? CellRange.fromStartAndEnd(
           this.args[0] as unknown as CellRef,

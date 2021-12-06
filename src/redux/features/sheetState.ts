@@ -118,41 +118,35 @@ const addCol = (state: SpreadSheetState, after: boolean): void => {
     delete state.cellDataMap[start];
     state.cellDataMap[end] = cellData;
     // adjust the expressions that depend on this cell
-    // if (
-    //   cellData.compiledExpression === undefined ||
-    //   !state.dependencyTree.getGraph().has(start)
-    // ) {
-    //   continue;
-    // }
-    // // each remapping iterates through the entire topologically sorted tree
-    // // so this algorithm is O(scary)
+    if (!state.dependencyTree.getGraph().has(start)) {
+      continue;
+    }
+
+    state.dependencyTree.remapNodeCoordinates(
+      coordKeyAsCoords(start),
+      coordKeyAsCoords(end)
+    );
+
+    const dependentCells = state.dependencyTree.getGraph().get(end);
+    const cellDependents =
+      dependentCells === undefined ? [] : Array.from(dependentCells.values());
+    console.log("DEPENDENTS POST", cellDependents);
+    for (const dependentCoord of cellDependents) {
+      console.log(`Changing ${start} -> ${end} for ${dependentCoord}`);
+      const dependentCellData = state.cellDataMap[dependentCoord];
+      if (dependentCellData?.compiledExpression === undefined) {
+        continue;
+      }
+      // edit raw string based on serialized edited expression data
+      changeCell(
+        state,
+        coordKeyAsCoords(dependentCoord),
+        `=${dependentCellData?.compiledExpression
+          .editCellRef(start, end)
+          .serialize()}`
+      );
+    }
   }
-  // for (let cellToReevaluate of state.dependencyTree.topologicalSort()) {
-  //   if
-  //   const dependentCells = state.dependencyTree.getGraph().get(start);
-  //   const cellDependents =
-  //       dependentCells === undefined ? [] : Array.from(dependentCells.values());
-  //   console.log("DEPENDENTS", cellDependents);
-  //   for (const dependentCoord of cellDependents) {
-  //     console.log(`Changing ${start} -> ${end} for ${dependentCoord}`);
-  //     const dependentCellData = state.cellDataMap[dependentCoord];
-  //     if (dependentCellData?.compiledExpression === undefined) {
-  //       continue;
-  //     }
-  //     // edit raw string based on serialized edited expression data
-  //     changeCell(
-  //         state,
-  //         coordKeyAsCoords(dependentCoord),
-  //         `=${dependentCellData?.compiledExpression
-  //             .editCellRef(start, end)
-  //             .serialize()}`
-  //     );
-  //   }
-  //   state.dependencyTree.remapNodeCoordinates(
-  //       coordKeyAsCoords(start),
-  //       coordKeyAsCoords(end)
-  //   );
-  // }
 };
 
 // const replaceCellRef = (raw: string, start: string, end: string) => {
