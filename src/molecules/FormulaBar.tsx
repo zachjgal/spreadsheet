@@ -21,6 +21,7 @@ const FormulaBar: React.FC<FormulaBarProps> = () => {
         className="formula-bar"
         type="text"
         value={rawExpr}
+        placeholder={"f(x) : Type your value here!!"}
         onChange={(e) => dispatch(setRawExpr(e.target.value))}
         onKeyPress={(e) => e.key === "Enter" && dispatch(editCell(rawExpr))}
       />
