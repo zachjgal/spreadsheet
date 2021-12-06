@@ -94,10 +94,19 @@ const editCellCoordKey = (coordKey: string, dRow: number, dCol: number) => {
 };
 
 // i'm sorry
-const addCol = (state: SpreadSheetState, after: boolean): void => {
+const addDataThingToSpreadSheet = (
+  state: SpreadSheetState,
+  after: boolean,
+  affectRow: boolean
+): void => {
+  const affectColumn = !affectRow;
+  const coordIndex = affectRow ? 0 : 1;
+
   const shouldMove = (cell: Coords): boolean =>
-    cell[1] >
-    (after ? state.selectedExpression[1] : state.selectedExpression[1] - 1);
+    cell[coordIndex] >
+    (after
+      ? state.selectedExpression[coordIndex]
+      : state.selectedExpression[coordIndex] - 1);
 
   let cellsToMove: string[] = Object.keys(state.cellDataMap).filter(
     (coordKey) => shouldMove(coordKeyAsCoords(coordKey))
@@ -106,13 +115,18 @@ const addCol = (state: SpreadSheetState, after: boolean): void => {
   // todo make sure this does descending order
   cellsToMove.sort(
     (coordKey1, coordKey2) =>
-      coordKeyAsCoords(coordKey2)[1] - coordKeyAsCoords(coordKey1)[1]
+      coordKeyAsCoords(coordKey2)[coordIndex] -
+      coordKeyAsCoords(coordKey1)[coordIndex]
   );
   console.log("CELLS TO MOVE", JSON.stringify(cellsToMove));
   // remap cell data and dependencies. because we've sorted the
   // transformations from right to left, we won't overwrite any data
   for (let start of cellsToMove) {
-    const end = editCellCoordKey(start, 0, 1);
+    const end = editCellCoordKey(
+      start,
+      affectRow ? 1 : 0,
+      affectColumn ? 1 : 0
+    );
     console.log(start, end);
     const cellData = state.cellDataMap[start];
     delete state.cellDataMap[start];
@@ -281,7 +295,19 @@ export const sheetState = createSlice({
     },
 
     addColumn: (state, action: PayloadAction<boolean>) => {
-      addCol(state as SpreadSheetState, action.payload);
+      addDataThingToSpreadSheet(
+        state as SpreadSheetState,
+        action.payload,
+        false
+      );
+    },
+
+    addRow: (state, action: PayloadAction<boolean>) => {
+      addDataThingToSpreadSheet(
+        state as SpreadSheetState,
+        action.payload,
+        true
+      );
     },
   },
 });
@@ -294,6 +320,7 @@ export const {
   editFormatData,
   setRawExpr,
   addColumn,
+  addRow,
   // addRowAbove,
   // addRowBelow,
   // addColumnLeft,

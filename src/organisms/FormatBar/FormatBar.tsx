@@ -2,6 +2,7 @@ import React, { ChangeEvent, FunctionComponent } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addColumn,
+  addRow,
   editFormatData,
   getCellDataDefaultValue,
 } from "../../redux/features/sheetState";
@@ -33,6 +34,14 @@ const EditAdd: React.FC<Props> = () => {
     {
       key: "Column Left",
       function: () => dispatch(addColumn(false)),
+    },
+    {
+      key: "Row Below",
+      function: () => dispatch(addRow(true)),
+    },
+    {
+      key: "Row Above",
+      function: () => dispatch(addRow(false)),
     },
   ];
   return (
@@ -220,7 +229,7 @@ const FormatBar: FunctionComponent = () => {
       component: EditFontColor,
     },
     {
-      key: "addColumn",
+      key: "addDataThing",
       component: EditAdd,
     },
   ];
