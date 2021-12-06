@@ -92,9 +92,27 @@ describe("Test for toString", () => {
       `{"1,1":[],"2,2":["1,1","4,4"],"3,3":["4,4"],"4,4":[],"5,5":[]}`
     );
   });
+});
+
+describe("Test for Circular ReferenceError", () => {
+  const dependencyTree = new DependencyTree();
+  const coords1: Coords = [1, 1];
+  const coordSet: Set<Coords> = new Set<Coords>();
+  const coords2: Coords = [2, 2];
+  const coordSet2: Set<Coords> = new Set<Coords>();
+  it("checking circular dependency error", () => {
+    coordSet.add(coords1);
+    assert.throw(
+      () => dependencyTree.addDependencies(coords1, coordSet),
+      CircularReferenceError,
+      ""
+    );
+  });
 
   it("checking circular dependency error", () => {
     coordSet.add(coords1);
+    dependencyTree.addDependencies(coords2, coordSet);
+    coordSet2.add(coords2);
     assert.throw(
       () => dependencyTree.addDependencies(coords1, coordSet),
       CircularReferenceError,
