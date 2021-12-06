@@ -4,35 +4,31 @@ type CellValue = string | number | boolean;
 
 type SheetData = CellValue[][];
 
-type FontSheetData = FontData[][];
+type FormatSheetData = FormatData[][];
 
-type FontData = {
+type FormatData = {
   font: string;
   size: number;
   bold: boolean;
   italic: boolean;
+  color: string;
 };
 
-type FontInput = {
-  coords: Coords;
-  data: FontData;
+type CellDataMap = {
+  [key: string]: CellData;
 };
 
-type FontEdit = {
-  coords: Coords;
-  data: string;
-};
-
-type SizeEdit = {
-  coords: Coords;
-  data: number;
-};
-
-type TypeEdit = {
-  coords: Coords;
-  data: boolean;
+type CellData = {
+  rawExpression: string;
+  compiledExpression?: Expr;
+  formatData: FormatData;
+  value: CellValue;
+  error?: Error;
 };
 
 interface Expr {
   execute(sheet: SheetData): CellValue;
+  serialize(): string;
+  // e.g. "1,2", "1,3"
+  editCellRef(oldCoordKey: string, newCoordKey: string): Expr;
 }

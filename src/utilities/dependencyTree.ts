@@ -9,6 +9,10 @@ export class DependencyTree {
     this.graph = new Map<string, Set<string>>();
   }
 
+  getGraph() {
+    return this.graph;
+  }
+
   toString() {
     return JSON.stringify(
       Object.fromEntries(
@@ -18,6 +22,28 @@ export class DependencyTree {
         ])
       )
     );
+  }
+
+  remapNodeCoordinates(nodeStartCoords: Coords, nodeEndCoords: Coords) {
+    const startCoordsKey = nodeStartCoords.toString();
+    const endCoordsKey = nodeEndCoords.toString();
+    for (let node of this.topologicalSort()) {
+      const nodeDependencies = this.graph.get(node);
+      // gets linter to shut up
+      if (nodeDependencies === undefined) {
+        throw new Error("missing node");
+      }
+      // remap key
+      if (node === startCoordsKey) {
+        this.graph.delete(node);
+        this.graph.set(endCoordsKey, nodeDependencies as Set<string>);
+      }
+      // remap dependency entries
+      if (nodeDependencies.has(startCoordsKey)) {
+        nodeDependencies.delete(startCoordsKey);
+        nodeDependencies.add(endCoordsKey);
+      }
+    }
   }
 
   addDependencies(node: Coords, dependencies: Set<Coords>) {
@@ -81,12 +107,17 @@ export class DependencyTree {
     return this.graph.has(node.toString());
   }
 
-  remove(node: Coords) {
+  removeNodeDependencies(node: Coords) {
     for (let n of this.graph.keys()) {
       if ((this.graph.get(n.toString()) as Set<string>).has(node.toString())) {
         (this.graph.get(n.toString()) as Set<string>).delete(node.toString());
       }
     }
+  }
+
+  removeNodeCompletely(node: Coords) {
+    this.removeNodeDependencies(node);
+    this.graph.delete(node.toString());
   }
 
   visitNode(node: string, visited: Set<string>, stack: Array<string>) {

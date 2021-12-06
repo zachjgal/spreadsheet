@@ -4,3 +4,6 @@
 .selected-cell {
   border: 2px solid;
 }
+.error-cell {
+  border: 2px solid red;
+}

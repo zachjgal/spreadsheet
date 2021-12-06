@@ -1,1 +1,14 @@
-/* TODO */
+.formula-bar-container {
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  top: 0;
+  background-color: white;
+}
+.formula-bar {
+  text-indent: 5px;
+  width: calc(100% - calc(100vw - 100%));
+}
+
+.formula-bar::placeholder {
+  padding-left: 2px;
+}

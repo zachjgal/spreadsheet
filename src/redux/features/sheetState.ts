@@ -1,189 +1,325 @@
-// the important spreadsheet data we wanna keep track of
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DependencyTree } from "../../utilities/dependencyTree";
 import { Compiler, Tokenizer } from "../../utilities/parser";
+import { FormatOption } from "../../types";
+import { RootState } from "../store";
+
+export const coordKeyAsCoords = (coordKey: string): Coords => {
+  const coordTokens = coordKey.split(",");
+  if (coordTokens.length !== 2) {
+    throw Error("Coords contain only 2 numbers");
+  }
+  return coordTokens.map((coord) => Number(coord)) as Coords;
+};
 
 export type SpreadSheetState = {
   dependencyTree: DependencyTree;
-  expressions: Map<string, Expr>;
-  rawExpressions: Map<string, string>;
-  sheetData: SheetData;
   selectedExpression: Coords;
-  errors: Map<string, Error>;
-  currentFormulaInput: string;
-  fontSheetData: FontSheetData;
+  cellDataMap: CellDataMap;
+  height: number;
+  width: number;
 };
 
-// todo use Array type, not array` literal
-const initSheetData = (initWidth = 58, initHeight = 58) => {
-  let newSheetData: SheetData = [];
-  for (let i: number = 0; i < initHeight; i++) {
-    newSheetData[i] = [];
-    for (let j: number = 0; j < initWidth; j++) {
-      newSheetData[i][j] = "";
-    }
-  }
-  return newSheetData;
+const DEFAULT_WIDTH = 59;
+const DEFAULT_HEIGHT = 59;
+
+const defaultFormatData: FormatData = {
+  font: "Open Sans",
+  size: 15,
+  bold: false,
+  italic: false,
+  color: "#000000",
 };
 
-const initSheetFontData = (initWidth = 58, initHeight = 58) => {
-  let newSheetData: FontSheetData = [];
-  for (let i: number = 0; i < initHeight; i++) {
-    newSheetData[i] = [];
-    for (let j: number = 0; j < initWidth; j++) {
-      let fontData: FontData = {
-        font: "Open Sans",
-        size: 15,
-        bold: false,
-        italic: false,
-      };
-      newSheetData[i][j] = fontData;
-    }
-  }
-  return newSheetData;
+export const initCell = (): CellData => {
+  return {
+    rawExpression: "",
+    formatData: { ...defaultFormatData },
+    value: "",
+  };
 };
 
 const initialState: SpreadSheetState = {
   dependencyTree: new DependencyTree(),
-  expressions: new Map<string, Expr>(),
-  rawExpressions: new Map<string, string>(),
-  sheetData: initSheetData(),
-  fontSheetData: initSheetFontData(),
   selectedExpression: [0, 0],
-  errors: new Map<string, Error>(),
-  currentFormulaInput: "",
+  cellDataMap: {},
+  height: DEFAULT_HEIGHT,
+  width: DEFAULT_WIDTH,
 };
 
 type EditActionPayload = string;
+
+const getCellDataAndFillDefault = (
+  state: SpreadSheetState,
+  coords: Coords
+): CellData => {
+  const coordKey = coords.toString();
+  const [row, col] = coords;
+  if (row + 1 > state.width) {
+    state.width = row + 1;
+  }
+  if (col + 1 > state.height) {
+    state.height = col + 1;
+  }
+  if (!state.cellDataMap.hasOwnProperty(coordKey)) {
+    state.cellDataMap[coordKey] = initCell();
+  }
+  return state.cellDataMap[coordKey];
+};
+
+export const getCellDataDefaultValue = (
+  state: SpreadSheetState,
+  coords: Coords
+): CellData => {
+  const coordKey = coords.toString();
+  return !state.cellDataMap.hasOwnProperty(coordKey)
+    ? initCell()
+    : state.cellDataMap[coordKey];
+};
+
+const collectSheetValues = (state: SpreadSheetState): SheetData => {
+  let sheetValues: SheetData = [];
+  for (let i = 0; i < state.height; i++) {
+    sheetValues[i] = [];
+    for (let j = 0; j < state.width; j++) {
+      sheetValues[i][j] = getCellDataDefaultValue(state, [i, j]).value;
+    }
+  }
+  return sheetValues;
+};
+
+const editCellCoordKey = (coordKey: string, dRow: number, dCol: number) => {
+  let [row, col] = coordKeyAsCoords(coordKey);
+  return [row + dRow, col + dCol].toString();
+};
+
+const removeDataThingFromSpreadsheet = (
+  state: SpreadSheetState,
+  affectRow: boolean
+) => {
+  const coordIndex = affectRow ? 0 : 1;
+  const shouldRemove = (cell: Coords): boolean =>
+    cell[coordIndex] === state.selectedExpression[coordIndex];
+  let cellsToRemove: string[] = Object.keys(state.cellDataMap).filter(
+    (coordKey) => shouldRemove(coordKeyAsCoords(coordKey))
+  );
+  // remove node from dependency graph completely
+  for (let cell of cellsToRemove) {
+    state.dependencyTree.removeNodeCompletely(coordKeyAsCoords(cell));
+    delete state.cellDataMap[cell];
+  }
+
+  shiftDataThingToSpreadSheet(state, true, affectRow, false);
+  if (affectRow) {
+    state.height--;
+  } else {
+    state.width--;
+  }
+};
+
+// i'm sorry
+const shiftDataThingToSpreadSheet = (
+  state: SpreadSheetState,
+  after: boolean,
+  affectRow: boolean,
+  positiveDirection: boolean
+): void => {
+  const directionDelta = positiveDirection ? 1 : -1;
+  const affectColumn = !affectRow;
+  const coordIndex = affectRow ? 0 : 1;
+
+  const shouldMove = (cell: Coords): boolean =>
+    cell[coordIndex] >
+    (after
+      ? state.selectedExpression[coordIndex]
+      : state.selectedExpression[coordIndex] - 1);
+
+  let cellsToMove: string[] = Object.keys(state.cellDataMap).filter(
+    (coordKey) => shouldMove(coordKeyAsCoords(coordKey))
+  );
+  // update
+  // move cells starting from right
+  // todo make sure this does descending order
+  cellsToMove.sort(
+    (coordKey1, coordKey2) =>
+      coordKeyAsCoords(coordKey2)[coordIndex] -
+      coordKeyAsCoords(coordKey1)[coordIndex]
+  );
+  console.log("CELLS TO MOVE", JSON.stringify(cellsToMove));
+  // remap cell data and dependencies. because we've sorted the
+  // transformations from right to left, we won't overwrite any data
+  for (let start of cellsToMove) {
+    const end = editCellCoordKey(
+      start,
+      affectRow ? directionDelta : 0,
+      affectColumn ? directionDelta : 0
+    );
+    console.log(start, end);
+    const cellData = state.cellDataMap[start];
+    delete state.cellDataMap[start];
+    state.cellDataMap[end] = cellData;
+    // adjust the expressions that depend on this cell
+    if (!state.dependencyTree.getGraph().has(start)) {
+      continue;
+    }
+
+    state.dependencyTree.remapNodeCoordinates(
+      coordKeyAsCoords(start),
+      coordKeyAsCoords(end)
+    );
+
+    const dependentCells = state.dependencyTree.getGraph().get(end);
+    const cellDependents =
+      dependentCells === undefined ? [] : Array.from(dependentCells.values());
+    console.log("DEPENDENTS POST", cellDependents);
+    for (const dependentCoord of cellDependents) {
+      console.log(`Changing ${start} -> ${end} for ${dependentCoord}`);
+      const dependentCellData = state.cellDataMap[dependentCoord];
+      if (dependentCellData?.compiledExpression === undefined) {
+        continue;
+      }
+      // edit raw string based on serialized edited expression data
+      changeCell(
+        state,
+        coordKeyAsCoords(dependentCoord),
+        `=${dependentCellData?.compiledExpression
+          .editCellRef(start, end)
+          .serialize()}`
+      );
+    }
+  }
+};
+
+const changeCell = (
+  state: SpreadSheetState,
+  cell: Coords,
+  newValue: string
+) => {
+  const isFormulaExpr = (exprString: string) => {
+    return exprString.startsWith("=");
+  };
+
+  const evaluateCell = (cell: Coords) => {
+    const cellData = getCellDataAndFillDefault(state, cell);
+
+    if (!cellData.hasOwnProperty("compiledExpression")) {
+      return;
+    }
+    // wHaT iF tHe VaLuE iS uNdEfInEd
+    cellData.value = (cellData.compiledExpression as Expr).execute(
+      collectSheetValues(state)
+    );
+  };
+
+  const updateCellAndChildren = (cell: Coords) => {
+    evaluateCell(cell);
+    let updateQueue: Array<string> = state.dependencyTree.topologicalSort(cell);
+    for (let dependent of updateQueue) {
+      evaluateCell(dependent.split(",").map((s) => Number(s)) as Coords);
+    }
+  };
+
+  const cellData = getCellDataAndFillDefault(state, cell);
+
+  try {
+    if (isFormulaExpr(newValue)) {
+      const deps = new Set<Coords>();
+      cellData.compiledExpression = new Compiler().compileWithDependencies(
+        Tokenizer.tokenize(newValue.substr(isFormulaExpr(newValue) ? 1 : 0)),
+        deps
+      );
+      cellData.rawExpression = `=${cellData.compiledExpression.serialize()}`; // autoformat user input
+      state.dependencyTree.removeNodeDependencies(cell);
+      state.dependencyTree.addDependencies(cell, deps);
+    } else {
+      cellData.rawExpression = newValue;
+      delete cellData.compiledExpression;
+      state.dependencyTree.removeNodeDependencies(cell);
+      // try to convert non formula value into num, otherwise treat as str
+      cellData.value =
+        newValue === "" || isNaN(Number(newValue))
+          ? newValue
+          : Number(newValue);
+    }
+    updateCellAndChildren(cell);
+    // todo reevaluate children to see if their errors can be removed as well.
+    //  e.g. A1 is circular reference, set B1 = A1, should get error. But then
+    //  if A1 is set to 1, the error on B1 should be removed automatically w/o
+    //  having to hit enter to reevaluate B1
+    if (cellData.hasOwnProperty("error")) {
+      delete cellData.error;
+    }
+  } catch (err) {
+    cellData.error = err as Error;
+  }
+};
 
 export const sheetState = createSlice({
   name: "sheetdata",
   initialState,
   reducers: {
+    setRawExpr: (state, action: PayloadAction<EditActionPayload>) => {
+      const coords = state.selectedExpression;
+      const cellData = getCellDataAndFillDefault(
+        state as SpreadSheetState,
+        coords
+      );
+      cellData.rawExpression = action.payload;
+    },
     editCell: (state, action: PayloadAction<EditActionPayload>) => {
       const newValue = action.payload;
-
       const cell: Coords = state.selectedExpression;
-
-      const isFormulaExpr = (exprString: string) => {
-        return exprString.startsWith("=");
-      };
-
-      const evaluateCell = (cell: Coords) => {
-        const [row, col] = cell;
-        if (!state.expressions.has(cell.toString())) {
-          return;
-        }
-        let expr = state.expressions.get(cell.toString());
-        if (!expr) {
-          return;
-        }
-        state.sheetData[row][col] = expr.execute(state.sheetData);
-      };
-
-      const updateCellAndChildren = (cell: Coords) => {
-        evaluateCell(cell);
-        let updateQueue: Array<string> =
-          state.dependencyTree.topologicalSort(cell);
-        for (let dependent of updateQueue) {
-          evaluateCell(dependent.split(",").map((s) => Number(s)) as Coords);
-        }
-      };
-
-      // track raw expr data
-      state.rawExpressions.set(cell.toString(), newValue);
-      try {
-        if (isFormulaExpr(newValue)) {
-          const deps = new Set<Coords>();
-          const expr = new Compiler().compileWithDependencies(
-            Tokenizer.tokenize(
-              newValue.substr(isFormulaExpr(newValue) ? 1 : 0)
-            ),
-            deps
-          );
-          state.expressions.set(cell.toString(), expr);
-          state.dependencyTree.remove(cell);
-          state.dependencyTree.addDependencies(cell, deps);
-        } else {
-          const [row, col] = cell;
-          state.expressions.delete(cell.toString());
-          state.dependencyTree.remove(cell);
-          // try to convert non formula value into num, otherwise treat as str
-          if (newValue === "" || isNaN(Number(newValue))) {
-            state.sheetData[row][col] = newValue;
-          } else {
-            state.sheetData[row][col] = Number(newValue);
-          }
-        }
-        updateCellAndChildren(cell);
-        // todo reevaluate children to see if their errors can be removed as well.
-        //  e.g. A1 is circular reference, set B1 = A1, should get error. But then
-        //  if A1 is set to 1, the error on B1 should be removed automatically w/o
-        //  having to hit enter to reevaluate B1
-        if (state.errors.has(state.selectedExpression.toString())) {
-          state.errors.delete(state.selectedExpression.toString());
-        }
-      } catch (err) {
-        state.errors.set(state.selectedExpression.toString(), err as Error);
-      }
+      changeCell(state as SpreadSheetState, cell, newValue);
     },
-
     selectExpression: (state, action: PayloadAction<Coords>) => {
+      const coords = state.selectedExpression;
+      const rawExpr = getCellDataAndFillDefault(
+        state as SpreadSheetState,
+        coords
+      ).rawExpression;
+      changeCell(state as SpreadSheetState, coords, rawExpr);
+
       state.selectedExpression = action.payload;
     },
 
-    getFontData: (state, action: PayloadAction<Coords>) => {
-      //To do, pass in the cell and get the font data associated with the cell
-      let x = action.payload[0];
-      let y = action.payload[1];
-      let fontData: FontData = {
-        font: state.fontSheetData[x][y].font,
-        size: state.fontSheetData[x][y].size,
-        bold: state.fontSheetData[x][y].bold,
-        italic: state.fontSheetData[x][y].italic,
+    editFormatData: (state, action: PayloadAction<Partial<FormatData>>) => {
+      const coords = state.selectedExpression;
+      const cellData = getCellDataAndFillDefault(
+        state as SpreadSheetState,
+        coords
+      );
+      cellData.formatData = {
+        ...cellData.formatData,
+        ...action.payload,
       };
-      console.log(x);
-      console.log(y);
-      console.log(fontData);
     },
 
-    editFontData: (state, action: PayloadAction<FontInput>) => {
-      //To do, pass in the cell and get the font data associated with the cell
-      // console.log("I am here")
-      // let x = action.payload.coords[0];
-      // let y = action.payload.coords[1];
-      // state.fontSheetData[x][y].font = action.payload.data.font;
-      // state.fontSheetData[x][y].size = action.payload.data.size;
-      // state.fontSheetData[x][y].bold = action.payload.data.bold;
-      // state.fontSheetData[x][y].italic = action.payload.data.italic;
+    addColumn: (state, action: PayloadAction<boolean>) => {
+      shiftDataThingToSpreadSheet(
+        state as SpreadSheetState,
+        action.payload,
+        false,
+        true
+      );
+      state.width++;
     },
 
-    editFonts: (state, action: PayloadAction<FontEdit>) => {
-      console.log("Here to edit font");
-      let x = action.payload.coords[0];
-      let y = action.payload.coords[1];
-      state.fontSheetData[x][y].font = action.payload.data;
+    addRow: (state, action: PayloadAction<boolean>) => {
+      shiftDataThingToSpreadSheet(
+        state as SpreadSheetState,
+        action.payload,
+        true,
+        true
+      );
+      state.height++;
     },
 
-    editSize: (state, action: PayloadAction<SizeEdit>) => {
-      console.log("Here to edit font");
-      let x = action.payload.coords[0];
-      let y = action.payload.coords[1];
-      state.fontSheetData[x][y].size = action.payload.data;
+    deleteColumn: (state) => {
+      removeDataThingFromSpreadsheet(state as SpreadSheetState, false);
     },
 
-    editBold: (state, action: PayloadAction<TypeEdit>) => {
-      console.log("Here to edit Bold");
-      let x = action.payload.coords[0];
-      let y = action.payload.coords[1];
-      state.fontSheetData[x][y].bold = action.payload.data;
-    },
-
-    editItalic: (state, action: PayloadAction<TypeEdit>) => {
-      console.log("Here to edit italic");
-      let x = action.payload.coords[0];
-      let y = action.payload.coords[1];
-      state.fontSheetData[x][y].italic = action.payload.data;
+    deleteRow: (state) => {
+      removeDataThingFromSpreadsheet(state as SpreadSheetState, true);
     },
   },
 });
@@ -193,11 +329,11 @@ const { actions, reducer } = sheetState;
 export const {
   selectExpression,
   editCell,
-  getFontData,
-  editFontData,
-  editFonts,
-  editBold,
-  editItalic,
-  editSize,
+  editFormatData,
+  setRawExpr,
+  addColumn,
+  addRow,
+  deleteColumn,
+  deleteRow,
 } = actions;
 export default reducer;

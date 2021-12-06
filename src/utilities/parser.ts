@@ -7,6 +7,7 @@ import {
   TokenizerError,
   InvalidExpressionError,
 } from "./errors";
+import { coordKeyAsCoords } from "../redux/features/sheetState";
 
 type TokensList = string | TokensList[];
 
@@ -127,10 +128,12 @@ const operationTypeToFunction = (
 class LanguageOperation implements Expr {
   private readonly op: (...args: CellValue[]) => CellValue;
   private readonly args: Expr[];
+  private readonly opType: OperationType;
 
   constructor(op: OperationType, args: Expr[]) {
     const assertArgLength = getOperationArgLengthAssertion(op);
     const operationFunction = operationTypeToFunction(op);
+    this.opType = op;
     this.op = (...args) => {
       assertArgLength(args);
       return operationFunction(...args);
@@ -140,6 +143,23 @@ class LanguageOperation implements Expr {
 
   execute(sheet: SheetData): CellValue {
     return this.op(...this.args.map((e) => e.execute(sheet)));
+  }
+
+  serialize(): string {
+    const serializedArgs = CellRange.isExplodedCellRange(this.args)
+      ? CellRange.fromStartAndEnd(
+          this.args[0] as unknown as CellRef,
+          this.args[this.args.length - 1] as unknown as CellRef
+        ).serialize()
+      : this.args.map((arg) => arg.serialize()).join(" ");
+    return `(${this.opType} ${serializedArgs})`;
+  }
+
+  editCellRef(oldCoordKey: string, newCoordKey: string): LanguageOperation {
+    return new LanguageOperation(
+      this.opType,
+      this.args.map((e) => e.editCellRef(oldCoordKey, newCoordKey))
+    );
   }
 }
 
@@ -168,6 +188,16 @@ class IFLanguageForm implements Expr {
       ? this.args[1].execute(sheet)
       : this.args[2].execute(sheet);
   }
+
+  serialize(): string {
+    return `(IF ${this.args[0].serialize()} ? ${this.args[1].serialize()} : ${this.args[2].serialize()})`;
+  }
+
+  editCellRef(oldCoordKey: string, newCoordKey: string): IFLanguageForm {
+    return new IFLanguageForm(
+      this.args.map((e) => e.editCellRef(oldCoordKey, newCoordKey))
+    );
+  }
 }
 
 class LanguageFormFactory {
@@ -188,6 +218,14 @@ class PrimitiveExpr implements Expr {
 
   execute(sheet: SheetData): CellValue {
     return this.value;
+  }
+
+  serialize(): string {
+    return `${this.value}`;
+  }
+
+  editCellRef(oldCoordKey: string, newCoordKey: string): PrimitiveExpr {
+    return new PrimitiveExpr(this.value);
   }
 }
 
@@ -248,6 +286,19 @@ export class CellRef implements Expr {
   execute(sheet: SheetData): CellValue {
     return sheet[this.row][this.col];
   }
+
+  serialize(): string {
+    return `${CellRef.makeCol(this.coords[1])}${this.coords[0] + 1}`;
+  }
+  // e.g. "1,2" => "1,3"
+  editCellRef(oldCoordKey: string, newCoordKey: string): CellRef {
+    // does not reference the cell we're trying to change the references for
+    if (oldCoordKey !== `${this.row},${this.col}`) {
+      return this;
+    }
+    let newCoords: Coords = coordKeyAsCoords(newCoordKey);
+    return CellRef.fromCoords(newCoords);
+  }
 }
 
 class CellRange {
@@ -262,6 +313,45 @@ class CellRange {
   public static isCellRange(expr: string): boolean {
     let match = expr.match(CellRange.REGEX);
     return !!match;
+  }
+
+  public static fromStartAndEnd(start: CellRef, end: CellRef): CellRange {
+    return new CellRange(`${start.serialize()}:${end.serialize()}`);
+  }
+
+  public static isExplodedCellRange(exprs: Expr[]): boolean {
+    if (exprs.length === 0) {
+      return false;
+    }
+
+    if (
+      !(
+        exprs[0] instanceof CellRef &&
+        exprs[exprs.length - 1] instanceof CellRef
+      )
+    ) {
+      return false;
+    }
+
+    const expectedRefs = CellRange.fromStartAndEnd(
+      exprs[0] as CellRef,
+      exprs[exprs.length - 1] as CellRef
+    ).asCells();
+    if (expectedRefs.length !== exprs.length) {
+      return false;
+    }
+    for (const expectedRef of expectedRefs) {
+      if (
+        !exprs.find(
+          (expr) =>
+            (expr as CellRef).row === expectedRef.row &&
+            (expr as CellRef).col === expectedRef.col
+        )
+      ) {
+        return false;
+      }
+    }
+    return true;
   }
 
   constructor(expr: string) {
@@ -291,6 +381,10 @@ class CellRange {
 
   asCells(): CellRef[] {
     return this.coords.map((coord) => CellRef.fromCoords(coord));
+  }
+
+  serialize(): string {
+    return [this.topLeft, this.bottomRight].join(":");
   }
 }
 
@@ -362,7 +456,7 @@ export class Tokenizer {
 export class Compiler {
   parseAsLangConstant(obj: string, _: Set<Coords>): Expr {
     if (!obj.startsWith("#")) {
-      throw new Error(
+      throw new ParserError(
         "Language constants like booleans should start with a '#'"
       );
     }
@@ -372,7 +466,9 @@ export class Compiler {
     } else if (constStr === "f" || constStr === "false") {
       return new PrimitiveExpr(false);
     } else {
-      throw new ParserError(`Unrecognized constant: ${obj.substr(1)}`);
+      throw new InvalidExpressionError(
+        `Unrecognized constant: ${obj.substr(1)}`
+      );
     }
   }
 
