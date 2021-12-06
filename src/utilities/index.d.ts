@@ -11,11 +11,22 @@ type FontData = {
   size: number;
   bold: boolean;
   italic: boolean;
+  color: string;
 };
 
-type FontInput = {
+type FontEdit = {
   coords: Coords;
-  data: FontData;
+  data: string;
+};
+
+type SizeEdit = {
+  coords: Coords;
+  data: number;
+};
+
+type TypeEdit = {
+  coords: Coords;
+  data: boolean;
 };
 
 type FontEdit = {

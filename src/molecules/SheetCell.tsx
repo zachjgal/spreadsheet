@@ -10,7 +10,7 @@ import "./SheetCell.css";
 import { useDispatch, useSelector } from "react-redux";
 import { PayloadAction } from "@reduxjs/toolkit";
 //import { editCell, setCurrentFormulaInput } from "../redux/features/sheetState";
-import { editCell, getFontData } from "../redux/features/sheetState";
+import { editCell } from "../redux/features/sheetState";
 import { RootState } from "../redux/store";
 
 type CellDisplayValueProps = {
@@ -45,6 +45,7 @@ type FontData = {
   size: number;
   bold: boolean;
   italic: boolean;
+  color: string;
 };
 
 const SheetCell: React.FC<SheetCellProps> = ({
@@ -79,18 +80,32 @@ const SheetCell: React.FC<SheetCellProps> = ({
     }
   }, [setIsEditMode, isSelected]);
 
-  const onDefocusInputHandler = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      setIsEditMode(false);
-      dispatch(editCell(cellValue));
+  const onClickOutsideInputHandler = (event: MouseEvent) => {
+    if ((event.target as HTMLElement)?.id !== `${rowInd},${colInd}`) {
       changeInputToLabel();
-      setMonitor("");
     }
   };
 
-  // const currentValue = useSelector(
-  //   (state: RootState) => state.data.currentFormulaInput
-  // );
+  useEffect(() => {
+    document.addEventListener("click", onClickOutsideInputHandler);
+    return document.addEventListener("click", onClickOutsideInputHandler);
+  }, []);
+
+  const onDefocusInputHandler = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      if (cellValue !== "") {
+        setIsEditMode(false);
+        changeInputToLabel();
+        dispatch(editCell(cellValue));
+        setMonitor("");
+        setCellValue("");
+      } else {
+        setIsEditMode(false);
+        changeInputToLabel();
+        setMonitor("");
+      }
+    }
+  };
 
   const cellStyle = {
     width: "100px",
@@ -98,19 +113,25 @@ const SheetCell: React.FC<SheetCellProps> = ({
     fontStyle: fontData.italic == true ? "italic" : "",
     fontFamily: `${fontData.font}`,
     fontSize: `${fontData.size}px`,
+    color: fontData.color,
   };
 
   return isEditMode ? (
-    <td>
+    <td id={`${rowInd},${colInd}`}>
       <input
-        className="cell-block"
+        id={`${rowInd},${colInd}`}
+        className="cell-block border-0"
         style={{ width: "100px" }}
-        value={cellValue}
+        value={cellValue == "" ? (value as string) : cellValue}
         ref={inputRef}
         onChange={(e) => {
-          setCellValue(e.currentTarget.value);
-          setMonitor(e.currentTarget.value);
-          dispatch(getFontData([rowInd, colInd]));
+          if (e.currentTarget.value.charAt(0) !== "=") {
+            setMonitor(e.currentTarget.value);
+            dispatch(editCell(e.currentTarget.value));
+          } else {
+            setMonitor(e.currentTarget.value);
+            setCellValue(e.currentTarget.value);
+          }
         }}
         onKeyDown={onDefocusInputHandler}
       />
@@ -118,18 +139,18 @@ const SheetCell: React.FC<SheetCellProps> = ({
   ) : (
     <td
       className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
+      id={`${rowInd},${colInd}`}
       // todo handle cells that have error w/ css
-      onClick={() => {
+      onClick={(e) => {
         // todo get state from formula bar / handle update
+        setMonitor(value as string);
         dispatch(onSelect());
         changeLabeltoInput();
         setX(rowInd);
         setY(colInd);
-        setMonitor(cellValue);
-        console.log(fontData);
       }}
     >
-      <div style={cellStyle}>
+      <div id={`${rowInd},${colInd}`} style={cellStyle} className="cell-data">
         <CellDisplayValue value={hasError ? "ERROR" : value} />
       </div>
     </td>

@@ -14,8 +14,11 @@ export type SpreadSheetState = {
   fontSheetData: FontSheetData;
 };
 
+let row = 14;
+let column = 30;
+
 // todo use Array type, not array` literal
-const initSheetData = (initWidth = 58, initHeight = 58) => {
+const initSheetData = (initWidth = row, initHeight = column) => {
   let newSheetData: SheetData = [];
   for (let i: number = 0; i < initHeight; i++) {
     newSheetData[i] = [];
@@ -26,7 +29,7 @@ const initSheetData = (initWidth = 58, initHeight = 58) => {
   return newSheetData;
 };
 
-const initSheetFontData = (initWidth = 58, initHeight = 58) => {
+const initSheetFontData = (initWidth = row, initHeight = column) => {
   let newSheetData: FontSheetData = [];
   for (let i: number = 0; i < initHeight; i++) {
     newSheetData[i] = [];
@@ -36,6 +39,7 @@ const initSheetFontData = (initWidth = 58, initHeight = 58) => {
         size: 15,
         bold: false,
         italic: false,
+        color: "#000000",
       };
       newSheetData[i][j] = fontData;
     }
@@ -132,37 +136,18 @@ export const sheetState = createSlice({
       state.selectedExpression = action.payload;
     },
 
-    getFontData: (state, action: PayloadAction<Coords>) => {
-      //To do, pass in the cell and get the font data associated with the cell
-      let x = action.payload[0];
-      let y = action.payload[1];
-      let fontData: FontData = {
-        font: state.fontSheetData[x][y].font,
-        size: state.fontSheetData[x][y].size,
-        bold: state.fontSheetData[x][y].bold,
-        italic: state.fontSheetData[x][y].italic,
-      };
-      console.log(x);
-      console.log(y);
-      console.log(fontData);
-    },
-
-    editFontData: (state, action: PayloadAction<FontInput>) => {
-      //To do, pass in the cell and get the font data associated with the cell
-      // console.log("I am here")
-      // let x = action.payload.coords[0];
-      // let y = action.payload.coords[1];
-      // state.fontSheetData[x][y].font = action.payload.data.font;
-      // state.fontSheetData[x][y].size = action.payload.data.size;
-      // state.fontSheetData[x][y].bold = action.payload.data.bold;
-      // state.fontSheetData[x][y].italic = action.payload.data.italic;
-    },
-
     editFonts: (state, action: PayloadAction<FontEdit>) => {
       console.log("Here to edit font");
       let x = action.payload.coords[0];
       let y = action.payload.coords[1];
       state.fontSheetData[x][y].font = action.payload.data;
+    },
+
+    editColor: (state, action: PayloadAction<FontEdit>) => {
+      console.log("Here to edit font");
+      let x = action.payload.coords[0];
+      let y = action.payload.coords[1];
+      state.fontSheetData[x][y].color = action.payload.data;
     },
 
     editSize: (state, action: PayloadAction<SizeEdit>) => {
@@ -193,11 +178,10 @@ const { actions, reducer } = sheetState;
 export const {
   selectExpression,
   editCell,
-  getFontData,
-  editFontData,
   editFonts,
   editBold,
   editItalic,
   editSize,
+  editColor
 } = actions;
 export default reducer;
