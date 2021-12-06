@@ -21,7 +21,7 @@ const Sheet: React.FC<SheetProps> = () => {
         <tr key={"topbar"}>
           {lodashRange(-1, width).map((colInd) =>
             colInd === -1 ? (
-              <th>{"   "}</th>
+              <th style={{ width: "36px" }}>{"   "}</th>
             ) : (
               <th className="text-center">{CellRef.makeCol(colInd)}</th>
             )
@@ -33,7 +33,9 @@ const Sheet: React.FC<SheetProps> = () => {
               colInd !== -1 ? (
                 <SheetCell coords={[rowInd, colInd]} />
               ) : (
-                <td style={{ minWidth: "24px", textAlign:"center" }}>{rowInd + 1}</td>
+                <td style={{ minWidth: "24px", textAlign: "center" }}>
+                  {rowInd + 1}
+                </td>
               )
             )}
           </tr>
