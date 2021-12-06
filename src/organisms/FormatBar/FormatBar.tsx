@@ -190,13 +190,13 @@ const FontSizeDropDown: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   );
 };
 
-// const Title: React.FC<Props> = ({}) => {
-//   return (
-//     <span className="title fw-bold fst-italic d-flex justify-content-center align-items-center">
-//       SheetSpread
-//     </span>
-//   );
-// };
+const Title: React.FC<Props> = ({}) => {
+  return (
+    <span className="title fw-bold fst-italic d-flex justify-content-center align-items-center">
+      SheetSpread
+    </span>
+  );
+};
 
 const FormatBar: FunctionComponent = () => {
   const dispatch = useDispatch();
@@ -210,6 +210,10 @@ const FormatBar: FunctionComponent = () => {
   };
 
   const editNavigation = [
+    {
+      key: "title",
+      component: Title,
+    },
     {
       key: "font",
       component: EditFont,
