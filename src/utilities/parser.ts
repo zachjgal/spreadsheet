@@ -179,7 +179,7 @@ class LanguageFormFactory {
   }
 }
 
-class PrimitiveExpr implements Expr {
+export class PrimitiveExpr implements Expr {
   private readonly value: CellValue;
 
   constructor(value: CellValue) {

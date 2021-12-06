@@ -10,9 +10,15 @@ export type FormulaBarProps = {};
 const FormulaBar: React.FC<FormulaBarProps> = () => {
   const dispatch = useDispatch();
   const rawExpr: string = useSelector(
-    (state: RootState) =>
-      state.data.rawExpressions.get(state.data.selectedExpression.toString()) ??
-      ""
+    (state: RootState) => {
+      const cell = state.data.selectedExpression;
+      const x_pos = cell[0];
+      const y_pos = cell[1];
+
+      return state.data.rawExpressions[x_pos][y_pos].toString() ?? "";
+    }
+    // state.data.rawExpressions.get(state.data.selectedExpression.toString()) ??
+    //""
   );
 
   return (
