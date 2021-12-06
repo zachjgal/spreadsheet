@@ -28,4 +28,7 @@ type CellData = {
 
 interface Expr {
   execute(sheet: SheetData): CellValue;
+  serialize(): string;
+  // e.g. "1,2", "1,3"
+  editCellRef(oldCoordKey: string, newCoordKey: string): Expr;
 }

@@ -93,6 +93,7 @@ const editCellCoordKey = (coordKey: string, dRow: number, dCol: number) => {
   return [row + dRow, col + dCol].toString();
 };
 
+// i'm sorry
 const addCol = (state: SpreadSheetState, after: boolean): void => {
   const shouldMove = (cell: Coords): boolean =>
     cell[1] >
@@ -107,7 +108,7 @@ const addCol = (state: SpreadSheetState, after: boolean): void => {
     (coordKey1, coordKey2) =>
       coordKeyAsCoords(coordKey2)[1] - coordKeyAsCoords(coordKey1)[1]
   );
-  console.log(JSON.stringify(cellsToMove));
+  console.log("CELLS TO MOVE", JSON.stringify(cellsToMove));
   // remap cell data and dependencies. because we've sorted the
   // transformations from right to left, we won't overwrite any data
   for (let start of cellsToMove) {
@@ -116,17 +117,70 @@ const addCol = (state: SpreadSheetState, after: boolean): void => {
     const cellData = state.cellDataMap[start];
     delete state.cellDataMap[start];
     state.cellDataMap[end] = cellData;
-    // each remap iterates through the entire topologically sorted tree
-    // so this algorithm is O(scary)
-    state.dependencyTree.remapNodeCoordinates(
-      coordKeyAsCoords(start),
-      coordKeyAsCoords(end)
-    );
-    // also remap expressions
-    // walk through compiled cell expressions
-    //
+    // adjust the expressions that depend on this cell
+    // if (
+    //   cellData.compiledExpression === undefined ||
+    //   !state.dependencyTree.getGraph().has(start)
+    // ) {
+    //   continue;
+    // }
+    // // each remapping iterates through the entire topologically sorted tree
+    // // so this algorithm is O(scary)
   }
+  // for (let cellToReevaluate of state.dependencyTree.topologicalSort()) {
+  //   if
+  //   const dependentCells = state.dependencyTree.getGraph().get(start);
+  //   const cellDependents =
+  //       dependentCells === undefined ? [] : Array.from(dependentCells.values());
+  //   console.log("DEPENDENTS", cellDependents);
+  //   for (const dependentCoord of cellDependents) {
+  //     console.log(`Changing ${start} -> ${end} for ${dependentCoord}`);
+  //     const dependentCellData = state.cellDataMap[dependentCoord];
+  //     if (dependentCellData?.compiledExpression === undefined) {
+  //       continue;
+  //     }
+  //     // edit raw string based on serialized edited expression data
+  //     changeCell(
+  //         state,
+  //         coordKeyAsCoords(dependentCoord),
+  //         `=${dependentCellData?.compiledExpression
+  //             .editCellRef(start, end)
+  //             .serialize()}`
+  //     );
+  //   }
+  //   state.dependencyTree.remapNodeCoordinates(
+  //       coordKeyAsCoords(start),
+  //       coordKeyAsCoords(end)
+  //   );
+  // }
 };
+
+// const replaceCellRef = (raw: string, start: string, end: string) => {
+//   // must start w/ =
+//   if (!raw.startsWith("=")) {
+//     throw new Error(
+//       "Unexpectedly trying to replace cell ref for cell w/ no expression"
+//     );
+//   }
+//   // // if preceded by odd number of quotes, we're inside a string
+//   // let inString: boolean = false;
+//   // // if preceded by #, the cell ref is a constant, so don't change it
+//   // let inConstant: boolean = false;
+//   // let newRawExpr = "";
+//   // let cellRefBuffer = "";
+//   // for (let c of raw) {
+//   //   let strToAdd: string = c;
+//   //   if (c === '"') {
+//   //     inString = !inString;
+//   //   }
+//   //   if (c === "#") {
+//   //     inConstant = true;
+//   //   }
+//   //   if (c === " " && inConstant) {
+//   //     inConstant = false;
+//   //   }
+//   }
+// };
 
 const changeCell = (
   state: SpreadSheetState,
@@ -158,7 +212,6 @@ const changeCell = (
   };
 
   const cellData = getCellDataAndFillDefault(state, cell);
-  cellData.rawExpression = newValue;
 
   try {
     if (isFormulaExpr(newValue)) {
@@ -167,9 +220,11 @@ const changeCell = (
         Tokenizer.tokenize(newValue.substr(isFormulaExpr(newValue) ? 1 : 0)),
         deps
       );
+      cellData.rawExpression = `=${cellData.compiledExpression.serialize()}`; // autoformat user input
       state.dependencyTree.remove(cell);
       state.dependencyTree.addDependencies(cell, deps);
     } else {
+      cellData.rawExpression = newValue;
       delete cellData.compiledExpression;
       state.dependencyTree.remove(cell);
       // try to convert non formula value into num, otherwise treat as str
