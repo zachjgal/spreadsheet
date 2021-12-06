@@ -136,6 +136,10 @@ export const sheetState = createSlice({
     setRawExpr: (state, action: PayloadAction<EditActionPayload>) => {
       const cell = state.selectedExpression;
       state.rawExpressions.set(cell.toString(), action.payload);
+      
+      console.log(`${cell[0]}:${cell[1]}`);
+      console.log(state.rawExpressions.get(cell.toString()));
+
     },
     editCell: (state, action: PayloadAction<EditActionPayload>) => {
       const newValue = action.payload;
@@ -145,9 +149,13 @@ export const sheetState = createSlice({
     selectExpression: (state, action: PayloadAction<Coords>) => {
       const cell = state.selectedExpression;
       const rawExpr = state.rawExpressions.get(cell.toString()) ?? "";
+       
       changeCell(state as SpreadSheetState, cell, rawExpr);
 
       state.selectedExpression = action.payload;
+
+      console.log(`${cell[0]}:${cell[1]}`);
+      console.log(state.rawExpressions.get(cell.toString()));
     },
 
     editFormatData: (state, action: PayloadAction<Partial<FormatData>>) => {
@@ -159,6 +167,7 @@ export const sheetState = createSlice({
     },
 
     addRowBelow: (state) => {
+      debugger
       console.log("Add Row Below");
       //update the SheetData
       const cell: Coords = state.selectedExpression;
@@ -181,6 +190,7 @@ export const sheetState = createSlice({
       state.rawExpressions.forEach((value: string, key: string) => {
         const x = key.split(",").map(Number)[0];
         const y = key.split(",").map(Number)[1];
+        console.log(`key : ${key}`);
         if (x > x_pos) {
           let c: Coords = [x, y];
           outdatedCoords.push(c);
@@ -194,10 +204,18 @@ export const sheetState = createSlice({
           outdatedCoords[x][1],
         ];
 
+        console.log(`outdatedCoords[x] : ${outdatedCoords[x]}`);
+        console.log(
+          `state.rawExpressions.get(outdatedCoords[x].toString())  : ${state.rawExpressions.get(
+            outdatedCoords[x].toString()
+          )}`
+        );
+        console.log(`updatedCoord.toString() : ${updatedCoord.toString()}`);
         //update the RawExpression Map
         let rawValue: string =
           state.rawExpressions.get(outdatedCoords[x].toString()) || "";
-        state.rawExpressions.delete(outdatedCoords[x].toString());
+        let deleted = state.rawExpressions.delete(outdatedCoords[x].toString());
+        console.log(deleted);
         state.rawExpressions.set(updatedCoord.toString(), rawValue);
 
         //update the expression Map
@@ -257,7 +275,7 @@ export const sheetState = createSlice({
       state.rawExpressions.forEach((value: string, key: string) => {
         const x = value.split(",").map(Number)[0];
         const y = value.split(",").map(Number)[1];
-        if (x > x_pos - 1) {
+        if (x >= x_pos) {
           let c: Coords = [x, y];
           outdatedCoords.push(c);
         }

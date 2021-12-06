@@ -10,3 +10,8 @@
 .format-color {
   height: 38px;
 }
+
+.btn  {
+  border-radius: 0px;
+  border-right: 1px solid white;
+}
