@@ -1,4 +1,8 @@
-import React, { ChangeEvent, FunctionComponent } from "react";
+import React, {
+  ChangeEvent,
+  FunctionComponent,
+  ReactComponentElement,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import {
@@ -29,9 +33,9 @@ type EditFormatProps = {
   ) => void;
 };
 
-type EditRowAndColumnProps = {};
+type Props = {};
 
-const EditAdd: React.FC<EditRowAndColumnProps> = () => {
+const EditAdd: React.FC<Props> = () => {
   const dispatch = useDispatch();
   const addDropDown = [
     {
@@ -67,7 +71,7 @@ const EditAdd: React.FC<EditRowAndColumnProps> = () => {
   );
 };
 
-const EditDelete: React.FC<EditRowAndColumnProps> = () => {
+const EditDelete: React.FC<Props> = () => {
   const dispatch = useDispatch();
   const deleteDropDown = [
     {
@@ -171,6 +175,13 @@ const FontSizeDropDown: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   );
 };
 
+const Title: React.FC<Props> = ({}) => {
+  return (
+    <span className="title fw-bold fst-italic d-flex justify-content-center align-items-center">
+      SheetSpread
+    </span> 
+  );
+};
 const FormatBar: FunctionComponent = () => {
   const dispatch = useDispatch();
 
@@ -183,6 +194,7 @@ const FormatBar: FunctionComponent = () => {
   };
 
   const editNavigation = [
+    { key: "title", component: Title },
     { key: "add", component: EditAdd },
     { key: "delete", component: EditDelete },
     {

@@ -8,10 +8,17 @@
 }
 
 .format-color {
-  height: 38px;
+  height: 45px;
 }
 
 .btn  {
+  height: 45px;
   border-radius: 0px;
   border-right: 1px solid white;
+}
+
+.title {
+  font-size: 30px;
+  padding-left: 10px;
+  padding-right: 20px;
 }
