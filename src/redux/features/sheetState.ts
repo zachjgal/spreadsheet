@@ -93,12 +93,38 @@ const editCellCoordKey = (coordKey: string, dRow: number, dCol: number) => {
   return [row + dRow, col + dCol].toString();
 };
 
+const removeDataThingFromSpreadsheet = (
+  state: SpreadSheetState,
+  affectRow: boolean
+) => {
+  const coordIndex = affectRow ? 0 : 1;
+  const shouldRemove = (cell: Coords): boolean =>
+    cell[coordIndex] === state.selectedExpression[coordIndex];
+  let cellsToRemove: string[] = Object.keys(state.cellDataMap).filter(
+    (coordKey) => shouldRemove(coordKeyAsCoords(coordKey))
+  );
+  // remove node from dependency graph completely
+  for (let cell of cellsToRemove) {
+    state.dependencyTree.removeNodeCompletely(coordKeyAsCoords(cell));
+    delete state.cellDataMap[cell];
+  }
+
+  shiftDataThingToSpreadSheet(state, true, affectRow, false);
+  if (affectRow) {
+    state.height--;
+  } else {
+    state.width--;
+  }
+};
+
 // i'm sorry
-const addDataThingToSpreadSheet = (
+const shiftDataThingToSpreadSheet = (
   state: SpreadSheetState,
   after: boolean,
-  affectRow: boolean
+  affectRow: boolean,
+  positiveDirection: boolean
 ): void => {
+  const directionDelta = positiveDirection ? 1 : -1;
   const affectColumn = !affectRow;
   const coordIndex = affectRow ? 0 : 1;
 
@@ -111,6 +137,7 @@ const addDataThingToSpreadSheet = (
   let cellsToMove: string[] = Object.keys(state.cellDataMap).filter(
     (coordKey) => shouldMove(coordKeyAsCoords(coordKey))
   );
+  // update
   // move cells starting from right
   // todo make sure this does descending order
   cellsToMove.sort(
@@ -124,8 +151,8 @@ const addDataThingToSpreadSheet = (
   for (let start of cellsToMove) {
     const end = editCellCoordKey(
       start,
-      affectRow ? 1 : 0,
-      affectColumn ? 1 : 0
+      affectRow ? directionDelta : 0,
+      affectColumn ? directionDelta : 0
     );
     console.log(start, end);
     const cellData = state.cellDataMap[start];
@@ -162,33 +189,6 @@ const addDataThingToSpreadSheet = (
     }
   }
 };
-
-// const replaceCellRef = (raw: string, start: string, end: string) => {
-//   // must start w/ =
-//   if (!raw.startsWith("=")) {
-//     throw new Error(
-//       "Unexpectedly trying to replace cell ref for cell w/ no expression"
-//     );
-//   }
-//   // // if preceded by odd number of quotes, we're inside a string
-//   // let inString: boolean = false;
-//   // // if preceded by #, the cell ref is a constant, so don't change it
-//   // let inConstant: boolean = false;
-//   // let newRawExpr = "";
-//   // let cellRefBuffer = "";
-//   // for (let c of raw) {
-//   //   let strToAdd: string = c;
-//   //   if (c === '"') {
-//   //     inString = !inString;
-//   //   }
-//   //   if (c === "#") {
-//   //     inConstant = true;
-//   //   }
-//   //   if (c === " " && inConstant) {
-//   //     inConstant = false;
-//   //   }
-//   }
-// };
 
 const changeCell = (
   state: SpreadSheetState,
@@ -229,12 +229,12 @@ const changeCell = (
         deps
       );
       cellData.rawExpression = `=${cellData.compiledExpression.serialize()}`; // autoformat user input
-      state.dependencyTree.remove(cell);
+      state.dependencyTree.removeNodeDependencies(cell);
       state.dependencyTree.addDependencies(cell, deps);
     } else {
       cellData.rawExpression = newValue;
       delete cellData.compiledExpression;
-      state.dependencyTree.remove(cell);
+      state.dependencyTree.removeNodeDependencies(cell);
       // try to convert non formula value into num, otherwise treat as str
       cellData.value =
         newValue === "" || isNaN(Number(newValue))
@@ -295,19 +295,31 @@ export const sheetState = createSlice({
     },
 
     addColumn: (state, action: PayloadAction<boolean>) => {
-      addDataThingToSpreadSheet(
+      shiftDataThingToSpreadSheet(
         state as SpreadSheetState,
         action.payload,
-        false
+        false,
+        true
       );
+      state.width++;
     },
 
     addRow: (state, action: PayloadAction<boolean>) => {
-      addDataThingToSpreadSheet(
+      shiftDataThingToSpreadSheet(
         state as SpreadSheetState,
         action.payload,
+        true,
         true
       );
+      state.height++;
+    },
+
+    deleteColumn: (state) => {
+      removeDataThingFromSpreadsheet(state as SpreadSheetState, false);
+    },
+
+    deleteRow: (state) => {
+      removeDataThingFromSpreadsheet(state as SpreadSheetState, true);
     },
   },
 });
@@ -321,11 +333,7 @@ export const {
   setRawExpr,
   addColumn,
   addRow,
-  // addRowAbove,
-  // addRowBelow,
-  // addColumnLeft,
-  // addColumnRight,
-  // deleteRow,
-  // deleteColumn,
+  deleteColumn,
+  deleteRow,
 } = actions;
 export default reducer;

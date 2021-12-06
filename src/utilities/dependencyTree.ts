@@ -107,12 +107,17 @@ export class DependencyTree {
     return this.graph.has(node.toString());
   }
 
-  remove(node: Coords) {
+  removeNodeDependencies(node: Coords) {
     for (let n of this.graph.keys()) {
       if ((this.graph.get(n.toString()) as Set<string>).has(node.toString())) {
         (this.graph.get(n.toString()) as Set<string>).delete(node.toString());
       }
     }
+  }
+
+  removeNodeCompletely(node: Coords) {
+    this.removeNodeDependencies(node);
+    this.graph.delete(node.toString());
   }
 
   visitNode(node: string, visited: Set<string>, stack: Array<string>) {

@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   addColumn,
   addRow,
+  deleteColumn,
+  deleteRow,
   editFormatData,
   getCellDataDefaultValue,
 } from "../../redux/features/sheetState";
@@ -60,33 +62,33 @@ const EditAdd: React.FC<Props> = () => {
   );
 };
 
-// const EditDelete: React.FC<Props> = () => {
-//   const dispatch = useDispatch();
-//   const deleteDropDown = [
-//     {
-//       key: "Delete Row",
-//       function: () => dispatch(deleteRow()),
-//     },
-//     {
-//       key: "Delete Column",
-//       function: () => dispatch(deleteColumn()),
-//     },
-//   ];
-//   return (
-//     <Dropdown>
-//       <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-//         Delete
-//       </Dropdown.Toggle>
-//       <Dropdown.Menu>
-//         {deleteDropDown.map((elem) => {
-//           return (
-//             <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
-//           );
-//         })}
-//       </Dropdown.Menu>
-//     </Dropdown>
-//   );
-// };
+const EditDelete: React.FC<Props> = () => {
+  const dispatch = useDispatch();
+  const deleteDropDown = [
+    {
+      key: "Delete Row",
+      function: () => dispatch(deleteRow()),
+    },
+    {
+      key: "Delete Column",
+      function: () => dispatch(deleteColumn()),
+    },
+  ];
+  return (
+    <Dropdown>
+      <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+        Delete
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        {deleteDropDown.map((elem) => {
+          return (
+            <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
+          );
+        })}
+      </Dropdown.Menu>
+    </Dropdown>
+  );
+};
 
 const EditFont: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   const font = useSelector(
@@ -231,6 +233,10 @@ const FormatBar: FunctionComponent = () => {
     {
       key: "addDataThing",
       component: EditAdd,
+    },
+    {
+      key: "removeDataThing",
+      component: EditDelete,
     },
   ];
 
