@@ -1,8 +1,12 @@
-import React, { useEffect } from "react";
+import React from "react";
 import "./SheetCell.css";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { selectExpression } from "../redux/features/sheetState";
+import {
+  getCellDataDefaultValue,
+  selectExpression,
+} from "../redux/features/sheetState";
+import { Form } from "react-bootstrap";
 
 type CellDisplayValueProps = {
   value: CellValue;
@@ -18,28 +22,53 @@ export type SheetCellProps = {
 };
 
 const SheetCell: React.FC<SheetCellProps> = ({ coords }) => {
-  const [row, col] = coords;
-
   const dispatch = useDispatch();
-  const value: CellValue = useSelector(
-    (state: RootState) => state.data.sheetData[row][col]
-  );
-  const errorLookup = useSelector((state: RootState) => state.data.errors);
+
+  const selectCellDataProp = (prop: keyof CellData) => (state: RootState) =>
+    getCellDataDefaultValue(state.data, coords)[prop];
+
+  const value = useSelector(selectCellDataProp("value")) as CellValue;
 
   const isSelected: boolean = useSelector(
     (state: RootState) =>
       state.data.selectedExpression.toString() === coords.toString()
   );
 
-  const formatData = useSelector(
-    (state: RootState) => state.data.formatSheetData[row][col]
-  );
-  const hasError = (cell: Coords): boolean => errorLookup.has(cell.toString());
+  const formatData: FormatData = {
+    font: useSelector(
+      (state: RootState) =>
+        getCellDataDefaultValue(state.data, coords).formatData.font
+    ),
+    size: useSelector(
+      (state: RootState) =>
+        getCellDataDefaultValue(state.data, coords).formatData.size
+    ),
+    bold: useSelector(
+      (state: RootState) =>
+        getCellDataDefaultValue(state.data, coords).formatData.bold
+    ),
+    italic: useSelector(
+      (state: RootState) =>
+        getCellDataDefaultValue(state.data, coords).formatData.italic
+    ),
+    color: useSelector(
+      (state: RootState) =>
+        getCellDataDefaultValue(state.data, coords).formatData.color
+    ),
+  };
 
+  const hasError = useSelector(
+    (state: RootState) =>
+      state.data.cellDataMap.hasOwnProperty(coords.toString()) &&
+      state.data.cellDataMap[coords.toString()].error !== undefined
+  );
   return (
     <td
-      className={["table-cell", isSelected ? "selected-cell" : ""].join(" ")}
-      id={hasError(coords) ? "error-cell" : ""}
+      className={[
+        "table-cell",
+        isSelected && !hasError ? "selected-cell" : "",
+        isSelected && hasError ? "error-cell" : "",
+      ].join(" ")}
       onClick={() => dispatch(selectExpression(coords))}
     >
       <span
@@ -53,7 +82,7 @@ const SheetCell: React.FC<SheetCellProps> = ({ coords }) => {
           } as React.CSSProperties
         }
       >
-        <CellDisplayValue value={hasError(coords) ? "ERROR" : value} />
+        <CellDisplayValue value={hasError ? "ERROR" : value} />
       </span>
     </td>
   );

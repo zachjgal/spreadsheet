@@ -24,6 +24,28 @@ export class DependencyTree {
     );
   }
 
+  remapNodeCoordinates(nodeStartCoords: Coords, nodeEndCoords: Coords) {
+    const startCoordsKey = nodeStartCoords.toString();
+    const endCoordsKey = nodeEndCoords.toString();
+    for (let node of this.topologicalSort()) {
+      const nodeDependencies = this.graph.get(node);
+      // gets linter to shut up
+      if (nodeDependencies === undefined) {
+        throw new Error("missing node");
+      }
+      // remap key
+      if (node === startCoordsKey) {
+        this.graph.delete(node);
+        this.graph.set(endCoordsKey, nodeDependencies as Set<string>);
+      }
+      // remap dependency entries
+      if (nodeDependencies.has(startCoordsKey)) {
+        nodeDependencies.delete(startCoordsKey);
+        nodeDependencies.add(endCoordsKey);
+      }
+    }
+  }
+
   addDependencies(node: Coords, dependencies: Set<Coords>) {
     // todo move initialization of node elsewhere
     if (!this.graph.has(node.toString())) {

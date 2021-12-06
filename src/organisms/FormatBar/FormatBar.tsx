@@ -1,30 +1,18 @@
-import React, {
-  ChangeEvent,
-  FunctionComponent,
-  ReactComponentElement,
-} from "react";
+import React, { ChangeEvent, FunctionComponent } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
 import {
+  addColumn,
   editFormatData,
-  addRowAbove,
-  addColumnLeft,
-  addColumnRight,
-  addRowBelow,
-  deleteColumn,
-  deleteRow,
+  getCellDataDefaultValue,
 } from "../../redux/features/sheetState";
 import FontPicker from "font-picker-react";
 import { FormatOption } from "../../types";
-import { Dropdown } from "react-bootstrap";
 import "./FormatBar.css";
+import { RootState } from "../../redux/store";
+import { debounce } from "lodash";
+import { Dropdown } from "react-bootstrap";
 
 const fontsAPIKey = "AIzaSyAMo73RrEPCwV-zygT3ibodMsxelIm26Lw";
-
-const selectFormatInfo = (formatKey: FormatOption) => (state: RootState) => {
-  const [x, y] = state.data.selectedExpression;
-  return state.data.formatSheetData[x][y][formatKey];
-};
 
 type EditFormatProps = {
   changeFormatInfo: (
@@ -39,20 +27,12 @@ const EditAdd: React.FC<Props> = () => {
   const dispatch = useDispatch();
   const addDropDown = [
     {
-      key: "Row Above",
-      function: () => dispatch(addRowAbove()),
-    },
-    {
-      key: "Row Below",
-      function: () => dispatch(addRowBelow()),
-    },
-    {
       key: "Column Right",
-      function: () => dispatch(addColumnRight()),
+      function: () => dispatch(addColumn(true)),
     },
     {
       key: "Column Left",
-      function: () => dispatch(addColumnLeft()),
+      function: () => dispatch(addColumn(false)),
     },
   ];
   return (
@@ -71,36 +51,40 @@ const EditAdd: React.FC<Props> = () => {
   );
 };
 
-const EditDelete: React.FC<Props> = () => {
-  const dispatch = useDispatch();
-  const deleteDropDown = [
-    {
-      key: "Delete Row",
-      function: () => dispatch(deleteRow()),
-    },
-    {
-      key: "Delete Column",
-      function: () => dispatch(deleteColumn()),
-    },
-  ];
-  return (
-    <Dropdown>
-      <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-        Delete
-      </Dropdown.Toggle>
-      <Dropdown.Menu>
-        {deleteDropDown.map((elem) => {
-          return (
-            <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
-          );
-        })}
-      </Dropdown.Menu>
-    </Dropdown>
-  );
-};
+// const EditDelete: React.FC<Props> = () => {
+//   const dispatch = useDispatch();
+//   const deleteDropDown = [
+//     {
+//       key: "Delete Row",
+//       function: () => dispatch(deleteRow()),
+//     },
+//     {
+//       key: "Delete Column",
+//       function: () => dispatch(deleteColumn()),
+//     },
+//   ];
+//   return (
+//     <Dropdown>
+//       <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+//         Delete
+//       </Dropdown.Toggle>
+//       <Dropdown.Menu>
+//         {deleteDropDown.map((elem) => {
+//           return (
+//             <Dropdown.Item onClick={elem.function}>{elem.key}</Dropdown.Item>
+//           );
+//         })}
+//       </Dropdown.Menu>
+//     </Dropdown>
+//   );
+// };
 
 const EditFont: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
-  const font = useSelector(selectFormatInfo(FormatOption.FONT)) as string;
+  const font = useSelector(
+    (state: RootState) =>
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .formatData.font
+  );
   return (
     <FontPicker
       apiKey={fontsAPIKey}
@@ -115,21 +99,33 @@ const EditFont: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
 };
 
 const EditFontColor: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
-  const color = useSelector(selectFormatInfo(FormatOption.COLOR)) as string;
+  const color = useSelector(
+    (state: RootState) =>
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .formatData.color
+  );
+  // Font color edit re-rendering is slow, and it happens every time the color data changes,
+  // so we debounce the data changing.
+  const changeColor = debounce(
+    (newColor: string) => changeFormatInfo(FormatOption.COLOR, newColor),
+    100
+  );
   return (
     <input
       type="color"
       value={color}
       className="format-color"
-      onChange={(e) => {
-        changeFormatInfo(FormatOption.COLOR, e.target.value);
-      }}
+      onChange={(e) => changeColor(e.target.value)}
     />
   );
 };
 
 const EditFontItalics: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
-  const italic = useSelector(selectFormatInfo(FormatOption.ITALIC)) as boolean;
+  const italic = useSelector(
+    (state: RootState) =>
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .formatData.italic
+  );
   return (
     <button
       className="format-option fst-italic"
@@ -143,7 +139,11 @@ const EditFontItalics: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
 };
 
 const EditFontBold: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
-  const bold = useSelector(selectFormatInfo(FormatOption.BOLD)) as boolean;
+  const bold = useSelector(
+    (state: RootState) =>
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .formatData.bold
+  );
   return (
     <button
       className="format-option fw-bold"
@@ -160,7 +160,11 @@ const EditFontBold: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
 const sizeArray = [...Array(100).keys()];
 
 const FontSizeDropDown: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
-  const fontSize = useSelector(selectFormatInfo(FormatOption.SIZE)) as number;
+  const fontSize = useSelector(
+    (state: RootState) =>
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .formatData.size
+  );
   return (
     <select
       value={fontSize}
@@ -175,13 +179,14 @@ const FontSizeDropDown: React.FC<EditFormatProps> = ({ changeFormatInfo }) => {
   );
 };
 
-const Title: React.FC<Props> = ({}) => {
-  return (
-    <span className="title fw-bold fst-italic d-flex justify-content-center align-items-center">
-      SheetSpread
-    </span> 
-  );
-};
+// const Title: React.FC<Props> = ({}) => {
+//   return (
+//     <span className="title fw-bold fst-italic d-flex justify-content-center align-items-center">
+//       SheetSpread
+//     </span>
+//   );
+// };
+
 const FormatBar: FunctionComponent = () => {
   const dispatch = useDispatch();
 
@@ -194,9 +199,6 @@ const FormatBar: FunctionComponent = () => {
   };
 
   const editNavigation = [
-    { key: "title", component: Title },
-    { key: "add", component: EditAdd },
-    { key: "delete", component: EditDelete },
     {
       key: "font",
       component: EditFont,
@@ -216,6 +218,10 @@ const FormatBar: FunctionComponent = () => {
     {
       key: "color",
       component: EditFontColor,
+    },
+    {
+      key: "addColumn",
+      component: EditAdd,
     },
   ];
 

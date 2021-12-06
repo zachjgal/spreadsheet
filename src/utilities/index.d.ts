@@ -14,6 +14,18 @@ type FormatData = {
   color: string;
 };
 
+type CellDataMap = {
+  [key: string]: CellData;
+};
+
+type CellData = {
+  rawExpression: string;
+  compiledExpression?: Expr;
+  formatData: FormatData;
+  value: CellValue;
+  error?: Error;
+};
+
 interface Expr {
   execute(sheet: SheetData): CellValue;
 }

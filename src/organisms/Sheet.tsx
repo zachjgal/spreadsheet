@@ -9,12 +9,8 @@ import { CellRef } from "../utilities/parser";
 export type SheetProps = {};
 
 const Sheet: React.FC<SheetProps> = () => {
-  const height: number = useSelector(
-    (state: RootState) => state.data.sheetData.length
-  );
-  const width: number = useSelector(
-    (state: RootState) => state.data.sheetData[0].length
-  );
+  const height: number = useSelector((state: RootState) => state.data.height);
+  const width: number = useSelector((state: RootState) => state.data.width);
   return (
     <div className="spreadsheet-container">
       <table className="spreadsheet-table">

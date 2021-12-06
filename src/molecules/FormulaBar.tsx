@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { editCell, setRawExpr } from "../redux/features/sheetState";
+import {
+  editCell,
+  getCellDataDefaultValue,
+  setRawExpr,
+} from "../redux/features/sheetState";
 
 import "./FormulaBar.css";
 
@@ -11,8 +15,8 @@ const FormulaBar: React.FC<FormulaBarProps> = () => {
   const dispatch = useDispatch();
   const rawExpr: string = useSelector(
     (state: RootState) =>
-      state.data.rawExpressions.get(state.data.selectedExpression.toString()) ??
-      ""
+      getCellDataDefaultValue(state.data, state.data.selectedExpression)
+        .rawExpression
   );
 
   return (
